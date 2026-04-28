@@ -1,113 +1,106 @@
-# REFER Script Factory Agent Governance
+# refer-zo-bootstrap
 
-This repo is governed by REFER.
+Portable REFER bootstrap for Zo computers. Cloned from GitHub, it installs the full REFER skill stack, authority surfaces, personas, and rules into a target Zo — turning any Zo into a governed VIPC operator.
 
-## Repo Purpose
+## What Gets Installed
 
-`refer-script-factory` is the seed implementation of the REFER Script Factory. Its job is to grow from a hand-authored VS Code extension into a self-indexing, self-describing, script-driven factory that can build and maintain its own script system with minimal dependence on remote AI.
+| Component | Description |
+|---|---|
+| **REFER.OS law** | Core governance files from `law/REFER.OS/` |
+| **Universal skills** | 8 REFER skills synced to `Zo Files/Skills/` |
+| **Authority surfaces** | Profile folder with operating rules, repo map, design system |
+| **Persona + rules** | Startup binder and persistent behavior rules |
+| **Install state** | `refer-install-state.json` for drift reconciliation |
 
-The factory should mature toward local-first operation:
+## Bootstrap Flow
 
-- scan its own codebase;
-- build and refresh its own treefile;
-- maintain a script registry;
-- maintain a script legend;
-- package compact agent context;
-- route prompts through governed scripts;
-- prefer local LLM/context workflows when sufficient.
-
-The factory doctrine is documented in `docs/factory-system-doctrine.md`: a forge is the conversion unit, the Script Factory is the governance layer that manages script forges, and the Factory System is the complete network of coordinated factories.
-
-## Default Prompt Flow
-
-Treat user prompts as intake for a contract-first workflow:
-
-1. Decode the prompt into a compact `refer.intake` contract.
-2. Route work through the Script Factory vocabulary in `docs/script-legend.md`.
-3. Use `.refer-factory/codebase-tree.json` and `.refer-factory/agent-context.md` when present before scanning files broadly.
-4. If context assets are stale or missing, prefer the `Scan Codebase` script path.
-5. If enough information exists, answer plainly and briefly.
-6. If repo facts are needed, propose or run a bounded script request instead of guessing.
-7. Do not execute scripts automatically unless the user or governed runner explicitly allows it.
-
-## Script Factory Self-Build Doctrine
-
-The Script Factory is a seed that builds itself when fed information.
-
-Each chat response should feed the factory. After resolving a request, ask what local forge, script, context asset, registry entry, prompt pattern, status event, test, or documentation update would let REFER resolve the same kind of request locally next time.
-
-Each turn should also self-heal the factory when it exposes a gap. Look for missing terminology, ambiguous categories, weak descriptions, stale scans, missing relationships, missing tests, missing statuses, and unknown needs discovered during use.
-
-Use this repair checklist:
-
-1. What did we need that did not exist yet?
-2. What was ambiguous?
-3. What had to be manually inferred?
-4. What should become a script, context asset, test, status, or doctrine rule?
-
-Use the factory vocabulary precisely:
-
-- `Forge`: one bounded conversion unit.
-- `Script Factory`: the system that creates, manages, and runs script forges.
-- `Factory System`: the complete network of coordinated factories across domains.
-
-- The source registry lives in `src/contracts/scriptFactory.ts`.
-- The script terminology authority lives in `src/contracts/scriptLegend.ts` and `docs/script-legend.md`.
-- The codebase scanner lives in `src/contracts/codebaseTree.ts` and `src/commands/scanCodebase.ts`.
-- The Script Factory UI lives in `src/cockpit/scriptFactoryPanel.ts`.
-- The native `@refer` entrypoint lives in `src/chat/referParticipant.ts`.
-- The orchestration runner lives in `src/chat/referOrchestratorRunner.ts`.
-- The resolution loop lives in `src/chat/referResolutionLoop.ts`.
-
-When adding factory capability, keep the loop deterministic:
-
-1. Add or update the script definition.
-2. Add or update the command/runner if it is executable.
-3. Add status/process events when it runs.
-4. Add scan/tree/context outputs if it creates artifacts.
-5. Update the Script Legend when new terms or categories appear.
-6. Verify with `npm run test`.
-
-## Script Rules
-
-- Scripts return structured packets or durable artifacts to REFER.
-- Scripts must record process status when they run.
-- Scripts may detect sensitive file names.
-- Scripts must not read or send contents of `.env*`, keys, certificates, or private credentials.
-- Repo facts should come from bounded scripts, treefiles, or direct source reads, not guessing.
-- Multi Script entries must list child scripts.
-- Single Script entries must represent one bounded operation.
-- Request Type entries are category labels, not runnable scripts.
-
-## Local-First Context Rules
-
-Prefer compact local context over broad remote prompting.
-
-- Use `.refer-factory/codebase-tree.json` as the machine-readable repository map.
-- Use `.refer-factory/agent-context.md` as the compact agent briefing.
-- Use `.refer-factory/script-legend.md` as terminology authority after scan generation.
-- Send local/remote models a context pack, not the whole repo.
-- Open full source files only when the treefile or task requires them.
-
-## Tracking
-
-- Process state: `.refer-factory/process-state.json`
-- Codebase tree: `.refer-factory/codebase-tree.json`
-- Agent context: `.refer-factory/agent-context.md`
-- Script legend: `.refer-factory/script-legend.md`
-- Codebase/subspace registry: `.refer-factory/codebases.json`
-- Chat sessions: `.refer-factory/chat/sessions/`
-
-## Verification
-
-Use:
-
-```powershell
-npm run test
+```bash
+git clone https://github.com/lightedcandle/refer-zo-bootstrap.git
+cd refer-zo-bootstrap
+npm install
+ZO_COMPUTER=<your-token> npm run bootstrap -- --profile <app> --instance refer
 ```
 
-For narrow compile checks, use:
+Or use the helper directly:
 
-```powershell
-npm run compile
+```bash
+node tools/vipc-bootstrap.mjs --profile myapp --instance refer
 ```
+
+## Profile Derivation
+
+If `--profile` is omitted, the bootstrap derives the profile from the Zo Files workspace — looking for existing project directories or context markers. Explicit is better:
+
+```bash
+node tools/vipc-bootstrap.mjs --profile alliance --instance refer
+```
+
+## Skills Installed
+
+Universal skills (always):
+
+- `refer-os` — startup binding and routing entry
+- `refer-zo-intake-router` — request classification and routing
+- `refer-governance` — law, authority, rule management
+- `refer-contract-tandem` — Codex-to-Zo handoff contract
+- `refer-library-bootstrap` — library version drift repair
+- `refer-vipc-build-director` — build director automation
+- `refer-vipc-operator-driver` — operator task driver
+- `refer-vipc-design-driver` — visual/design contracts
+
+## Token Resolution
+
+| Instance | Env Variable |
+|---|---|
+| `refer` (default) | `ZO_COMPUTER_REFER` → `ZO_ACCESS_TOKEN` → `ZO_COMPUTER` |
+| `telechurch` | `ZO_COMPUTER_TELECHURCH` |
+| Any other name | `ZO_COMPUTER_<UPPERCASE_NAME>` |
+
+Set tokens in `.env.local` or `.env.master` in the repo root. Never commit tokens.
+
+## Non-Negotiables
+
+- Zo is the **operator layer**, not the system of record. Canonical truth lives in the target app's GitHub repo.
+- No production mutation from Zo without explicit approval and a Codex handoff.
+- Stub, sandbox, and production behavior must always be labeled.
+- Bootstrap is **idempotent** — running it again safely reconciles drift.
+
+## Repo Structure
+
+```
+refer-zo-bootstrap/
+├── AGENTS.md              ← You are here
+├── README.md              ← Project overview
+├── package.json           ← npm scripts and bin entry points
+├── .gitignore
+├── .github/
+│   └── workflows/         ← CI, publish, release workflows
+├── docs/                  ← Bootstrap blueprint and usage docs
+├── law/
+│   └── REFER.OS/         ← Core REFER law files
+├── skills/
+│   ├── library-manifest.json
+│   ├── refer-os/
+│   ├── refer-zo-intake-router/
+│   ├── refer-governance/
+│   ├── refer-contract-tandem/
+│   ├── refer-library-bootstrap/
+│   ├── refer-vipc-build-director/
+│   ├── refer-vipc-operator-driver/
+│   ├── refer-vipc-design-driver/
+│   └── zo-design-driver/
+├── refer-install-state.json
+└── tools/
+    ├── vipc-bootstrap.mjs   ← Main bootstrap installer
+    └── zo-mcp.mjs           ← MCP helper CLI
+```
+
+## For Zo Developers
+
+After bootstrap, the Zo Files workspace will contain:
+
+- `AGENTS.md` — workspace-level memory and guidance
+- `agent.md` — runtime binder pointing to active profile paths
+- `Skills/` — installed REFER skill library
+- `REFER.OS/` — REFER law files
+- `<PROFILE>/` — authority surfaces for the active profile
