@@ -1,106 +1,94 @@
-# refer-zo-bootstrap
+# refer-zo-bootstrap — Zo-Native REFER Bootstrap
 
-Portable REFER bootstrap for Zo computers. Cloned from GitHub, it installs the full REFER skill stack, authority surfaces, personas, and rules into a target Zo — turning any Zo into a governed VIPC operator.
+**Version:** 0.3.0  
+**Purpose:** Factory-first Zo computer bootstrap via git.  
+**Git repo:** https://github.com/lightedcandle/refer-zo-bootstrap
 
-## What Gets Installed
+---
 
-| Component | Description |
+## What This Repo Is
+
+Portable bootstrap that installs into any Zo computer from a single git clone.
+Gives Zo:
+- Startup binder (`agent.md` + `AGENTS.md`)
+- `REFER.OS` law files (selected, Zo-appropriate)
+- 8 universal skills under `Skills/`
+- 5 factory scripts + 2 token scripts under `Scripts/`
+- Token fuel tracker with dashboard
+
+## Factory-First Doctrine
+
+```
+Script → Registry lookup → Existing artifact → AI generation
+```
+
+- **Scripts** do repetitive work (bootstrap, sync, scan, emit, register)
+- **AI** reasons and handles novelty
+- **Every successful pattern** gets registered for reuse
+- This reduces token burn by replacing repeated AI calls with durable machinery
+
+## Skill Library (8 Skills)
+
+| Skill | Role |
 |---|---|
-| **REFER.OS law** | Core governance files from `law/REFER.OS/` |
-| **Universal skills** | 8 REFER skills synced to `Zo Files/Skills/` |
-| **Authority surfaces** | Profile folder with operating rules, repo map, design system |
-| **Persona + rules** | Startup binder and persistent behavior rules |
-| **Install state** | `refer-install-state.json` for drift reconciliation |
+| `refer-os` | Startup binder — read agent.md/AGENTS.md first |
+| `refer-zo-intake-router` | Classify every request before acting |
+| `refer-governance` | Law updates, authority drift, routing checks |
+| `refer-contract-tandem` | Zo↔Codex bridge, bounded tracker execution |
+| `refer-library-bootstrap` | Skill version reconciliation on boot |
+| `refer-build-director` | Autonomous pendulum orchestrator (activate via automation) |
+| `refer-design-driver` | Universal visual design overlay (any platform) |
+| `refer-operator-driver` | Repo/workspace-connected work engine |
 
-## Bootstrap Flow
+## Scripts
+
+**Factory scripts** (`scripts/factory/`):
+- `bootstrap.mjs` — Bootstrap a new profile from git
+- `sync-skill.mjs` — Sync one skill from repo to Zo Files
+- `scan-workspace.mjs` — Emit workspace code tree for AI context
+- `emit-contract.mjs` — Derive Send Contract from Plan markdown
+- `register-artifact.mjs` — Register successful artifact for reuse
+
+**Token scripts** (`scripts/token/`):
+- `token-tracker.mjs` — Track token usage per session (4 chars/token estimate)
+- `token-dashboard.mjs` — Generate HTML fuel dashboard
+
+Run scripts with: `node scripts/<category>/<script>.mjs --help`
+
+## Install
 
 ```bash
 git clone https://github.com/lightedcandle/refer-zo-bootstrap.git
 cd refer-zo-bootstrap
-npm install
-ZO_COMPUTER=<your-token> npm run bootstrap -- --profile <app> --instance refer
+node scripts/factory/bootstrap.mjs --profile <name> --repo . --local
 ```
 
-Or use the helper directly:
-
+Or remotely:
 ```bash
-node tools/vipc-bootstrap.mjs --profile myapp --instance refer
+node scripts/factory/bootstrap.mjs --profile myapp --repo https://github.com/you/refer-zo-bootstrap.git
 ```
 
-## Profile Derivation
+## Law Files (Selected for Zo)
 
-If `--profile` is omitted, the bootstrap derives the profile from the Zo Files workspace — looking for existing project directories or context markers. Explicit is better:
+Zo-appropriate only. Strictly Codex-specific docs (Angular compiler, spirit runtime, etc.) are pruned.
 
-```bash
-node tools/vipc-bootstrap.mjs --profile alliance --instance refer
-```
+Included: `refer.md`, `refer.zo.md`, `refer.os.md`, `refer.skills.md`, `refer.plan.md`, `refer.flow.md`, `refer.governance.md`, `refer.factory.md`, `refer.engine.md`, `refer.efficiency.md`, `refer.supabase.md`, `refer.github.md`, `refer.file.md`, `refer.build.md`, `refer.commit.md`, `refer.qc.md`, `refer.branch.md`, `refer.odometer.md`, `refer.instantiation.md`, `refer.daylight.md`, `refer.shortlink.md`, `refer.honeycomb.md`, `refer.design.md`, `refer.structure.md`, `refer.auth.md`, `refer.stripe.md`, `refer.ontology.md`, `refer.api.md`, `refer.migrate.md`, `refer.combing.md`, `refer.expand.md`, `refer.repair.md`, `refer.seamless-ui.md`, `refer.identity.md`, `refer.cron.md`, `refer.systems.security.md`, `refer.talents.md`, `refer.og.md`, `refer.codebases.md`, `refer.law.index.md`, `refer.law.md`, `refer.law.crossref.md`, `refer.audit.md`, `refer.provider.google.md`
 
-## Skills Installed
+Excluded: Angular-specific, Codex provider docs, spirit runtime, compiler docs, tribal E2E artifacts.
 
-Universal skills (always):
+## Token Discipline
 
-- `refer-os` — startup binding and routing entry
-- `refer-zo-intake-router` — request classification and routing
-- `refer-governance` — law, authority, rule management
-- `refer-contract-tandem` — Codex-to-Zo handoff contract
-- `refer-library-bootstrap` — library version drift repair
-- `refer-vipc-build-director` — build director automation
-- `refer-vipc-operator-driver` — operator task driver
-- `refer-vipc-design-driver` — visual/design contracts
+- Every session: `node scripts/token/token-tracker.mjs --input "..." --output "..."`
+- Watch fuel: `node scripts/token/token-dashboard.mjs --stats`
+- If fuel > 80%, pause heavy AI work and alert
+- Scripts first — they cost zero AI tokens
 
-## Token Resolution
+## Startup Binding
 
-| Instance | Env Variable |
-|---|---|
-| `refer` (default) | `ZO_COMPUTER_REFER` → `ZO_ACCESS_TOKEN` → `ZO_COMPUTER` |
-| `telechurch` | `ZO_COMPUTER_TELECHURCH` |
-| Any other name | `ZO_COMPUTER_<UPPERCASE_NAME>` |
+On every session start, Zo reads:
+1. `agent.md` (if present in Zo Files workspace root)
+2. `AGENTS.md` (if present)
+3. `Skills/refer-os/SKILL.md` (entry wrapper)
+4. `REFER.OS/refer.md` (router)
 
-Set tokens in `.env.local` or `.env.master` in the repo root. Never commit tokens.
-
-## Non-Negotiables
-
-- Zo is the **operator layer**, not the system of record. Canonical truth lives in the target app's GitHub repo.
-- No production mutation from Zo without explicit approval and a Codex handoff.
-- Stub, sandbox, and production behavior must always be labeled.
-- Bootstrap is **idempotent** — running it again safely reconciles drift.
-
-## Repo Structure
-
-```
-refer-zo-bootstrap/
-├── AGENTS.md              ← You are here
-├── README.md              ← Project overview
-├── package.json           ← npm scripts and bin entry points
-├── .gitignore
-├── .github/
-│   └── workflows/         ← CI, publish, release workflows
-├── docs/                  ← Bootstrap blueprint and usage docs
-├── law/
-│   └── REFER.OS/         ← Core REFER law files
-├── skills/
-│   ├── library-manifest.json
-│   ├── refer-os/
-│   ├── refer-zo-intake-router/
-│   ├── refer-governance/
-│   ├── refer-contract-tandem/
-│   ├── refer-library-bootstrap/
-│   ├── refer-vipc-build-director/
-│   ├── refer-vipc-operator-driver/
-│   ├── refer-vipc-design-driver/
-│   └── zo-design-driver/
-├── refer-install-state.json
-└── tools/
-    ├── vipc-bootstrap.mjs   ← Main bootstrap installer
-    └── zo-mcp.mjs           ← MCP helper CLI
-```
-
-## For Zo Developers
-
-After bootstrap, the Zo Files workspace will contain:
-
-- `AGENTS.md` — workspace-level memory and guidance
-- `agent.md` — runtime binder pointing to active profile paths
-- `Skills/` — installed REFER skill library
-- `REFER.OS/` — REFER law files
-- `<PROFILE>/` — authority surfaces for the active profile
+Skills load beneath these binders. Authority lives in law files, not in unstated memory.

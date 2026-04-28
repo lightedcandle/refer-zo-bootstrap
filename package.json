@@ -1,33 +1,49 @@
 {
   "name": "refer-zo-bootstrap",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
-  "description": "Portable REFER bootstrap for Zo — installs skills, personas, rules, and REFER.OS law from a cloned GitHub repo.",
+  "description": "Portable factory-first bootstrap for Zo computers. Git-based install, scripts for repetitive work, token fuel dashboard, universal design/operator/build-director skills.",
   "type": "module",
   "bin": {
     "refer-zo-bootstrap": "./tools/vipc-bootstrap.mjs",
     "refer-zo-mcp": "./tools/zo-mcp.mjs"
   },
   "scripts": {
-    "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs",
-    "bootstrap": "node tools/vipc-bootstrap.mjs"
+    "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs && node --check scripts/factory/bootstrap.mjs && node --check scripts/factory/sync-skill.mjs && node --check scripts/factory/scan-workspace.mjs && node --check scripts/factory/emit-contract.mjs && node --check scripts/factory/register-artifact.mjs && node --check scripts/token/token-tracker.mjs",
+    "bootstrap": "node scripts/factory/bootstrap.mjs",
+    "sync-skill": "node scripts/factory/sync-skill.mjs",
+    "scan": "node scripts/factory/scan-workspace.mjs",
+    "emit-contract": "node scripts/factory/emit-contract.mjs",
+    "register": "node scripts/factory/register-artifact.mjs",
+    "token-track": "node scripts/token/token-tracker.mjs",
+    "token-dashboard": "node scripts/token/token-dashboard.mjs",
+    "token-reset": "node scripts/token/token-tracker.mjs --reset"
   },
   "engines": {
     "node": ">=20"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lightedcandle/refer-zo-bootstrap.git"
-  },
-  "homepage": "https://github.com/lightedcandle/refer-zo-bootstrap",
-  "keywords": ["refer", "zo", "bootstrap", "skills", "vipc", "agent", "governance"],
-  "license": "MIT",
   "files": [
     "AGENTS.md",
     "docs/",
     "law/",
     "skills/",
     "tools/",
+    "scripts/",
     "refer-install-state.json"
-  ]
+  ],
+  "keywords": [
+    "refer",
+    "zo",
+    "bootstrap",
+    "factory-first",
+    "token-tracking",
+    "skill-library",
+    "vipc",
+    "scripts"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightedcandle/refer-zo-bootstrap.git"
+  }
 }
