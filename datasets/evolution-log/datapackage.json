@@ -1,0 +1,109 @@
+{
+  "name": "evolution-log",
+  "description": "Every bootstrap/evolution session as a learning event. Each row = one run = one lesson.",
+  "tables": {
+    "evolution_events": {
+      "description": "One row per evolution session (bootstrap, retry, repair, etc.)",
+      "columns": [
+        "id          TEXT  PRIMARY KEY,  -- uuid",
+        "session_id  TEXT  NOT NULL,     -- e.g. boot-apostlej-001",
+        "source      TEXT  NOT NULL,     -- which bootstrap/forge invoked this",
+        "origin      TEXT  NOT NULL,     -- zo name / machine label",
+        "outcome     TEXT  NOT NULL,     -- EVOLVED | COMPLETE | FAILED | RETRY_PENDING",
+        "ran_at      TEXT  NOT NULL,     -- ISO timestamp when session started",
+        "finished_at TEXT,               -- ISO timestamp when session ended",
+        "duration_ms  INTEGER,           -- how long the session ran",
+        "mode         TEXT,               -- install | retry | repair | evolve",
+        "errors_encountered INTEGER DEFAULT 0,  -- count of errors",
+        "forges_created  INTEGER DEFAULT 0,      -- count of new forges generated",
+        "corrections_applied INTEGER DEFAULT 0, -- count of auto-corrections",
+        "can_retry   BOOLEAN DEFAULT true,      -- whether retry is possible",
+        "retry_after TEXT,                       -- ISO timestamp for retry window",
+        "notes        TEXT                        -- human-readable summary"
+      ]
+    },
+    "evolution_errors": {
+      "description": "One row per error/warning encountered during evolution",
+      "columns": [
+        "id            TEXT  PRIMARY KEY,  -- uuid",
+        "session_id    TEXT  NOT NULL,     -- FK to evolution_events",
+        "phase         TEXT  NOT NULL,     -- which phase (persona_sync, skill_install, etc.)",
+        "error_type    TEXT  NOT NULL,     -- MISSING | STALE | CONFLICT | UNKNOWN | PARSE",
+        "severity      TEXT  NOT NULL,     -- WARNING | ERROR | BLOCKING",
+        "detail        TEXT,               -- full error message",
+        "forge_generated TEXT,             -- script forge created from this error (if any)",
+        "forge_file    TEXT,               -- path where forge was written",
+        "registered    BOOLEAN DEFAULT false, -- whether forge was registered",
+        "talkback_sent BOOLEAN DEFAULT false, -- whether hive was notified",
+        "talkback_id   TEXT,               -- hive response ID if received",
+        "resolved     BOOLEAN DEFAULT false,  -- whether error was resolved in session",
+        "resolution   TEXT                  -- how it was resolved"
+      ]
+    },
+    "forge_generations": {
+      "description": "One row per new forge generated during evolution",
+      "columns": [
+        "id              TEXT  PRIMARY KEY,  -- uuid",
+        "session_id      TEXT  NOT NULL,     -- FK to evolution_events",
+        "error_id        TEXT,               -- FK to evolution_errors (what triggered this)",
+        "forge_id        TEXT  NOT NULL,     -- e.g. bootstrap/startup-map-v1",
+        "forge_name      TEXT  NOT NULL,     -- human name",
+        "forge_type      TEXT  NOT NULL,     -- patch | seed | wrapper | validator",
+        "trigger_prompt  TEXT,               -- the auto-generated prompt that created it",
+        "generated_at   TEXT  NOT NULL,      -- ISO timestamp",
+        "file_path       TEXT,               -- where the forge was written",
+        "registered      BOOLEAN DEFAULT false, -- in script-registry?",
+        "talkback_sent   BOOLEAN DEFAULT false, -- notified hive?",
+        "talkback_id    TEXT,
+        "hive_verified  BOOLEAN DEFAULT false, -- hive confirmed receipt",
+        "reused_count   INTEGER DEFAULT 0     -- how many times this forge was reused"
+      ]
+    },
+    "talkback_log": {
+      "description": "Outbound talkback events sent to Hive",
+      "columns": [
+        "id            TEXT  PRIMARY KEY,  -- uuid",
+        "session_id    TEXT  NOT NULL,
+        "endpoint      TEXT  NOT NULL,     -- which hive endpoint",
+        "payload_type  TEXT  NOT NULL,     -- EVOLUTION | FORGE_REG | HEARTBEAT | ERROR_REPORT",
+        "payload       TEXT  NOT NULL,     -- JSON stringified body",
+        "sent_at       TEXT  NOT NULL,     -- ISO timestamp",
+        "response_id   TEXT,               -- hive's response id",
+        "response_code INTEGER,             -- HTTP status code",
+        "response_body TEXT,                -- hive's response",
+        "verified      BOOLEAN DEFAULT false, -- got acknowledgement",
+        "retry_count  INTEGER DEFAULT 0,
+        "next_retry   TEXT                  -- ISO timestamp"
+      ]
+    },
+    "system_snapshots": {
+      "description": "Periodic state snapshots of the local zo system",
+      "columns": [
+        "id            TEXT  PRIMARY KEY,
+        "session_id    TEXT,               -- if taken during a session",
+        "taken_at      TEXT  NOT NULL,
+        "skills_count  INTEGER,
+        "rules_count   INTEGER,
+        "personas_count INTEGER,
+        "datasets_count INTEGER,
+        "refer_version TEXT,
+        "hive_synced   BOOLEAN",
+        "last_error    TEXT"
+      ]
+    }
+  },
+  "indexes": [
+    "CREATE INDEX idx_sessions ON evolution_events(session_id)",
+    "CREATE INDEX idx_errors_session ON evolution_errors(session_id)",
+    "CREATE INDEX idx_errors_unresolved ON evolution_errors(resolved) WHERE resolved = false",
+    "CREATE INDEX idx_forge_gen_session ON forge_generations(session_id)",
+    "CREATE INDEX idx_talkback_pending ON talkback_log(verified) WHERE verified = false"
+  ],
+  "seed_data": {
+    "evolution_events": [],
+    "evolution_errors": [],
+    "forge_generations": [],
+    "talkback_log": [],
+    "system_snapshots": []
+  }
+}

@@ -5,3 +5,5 @@ usage/
 *.local.json
 npm-debug.log*
 .DS_Store
+datasets/*/data.duckdb
+datasets/*/*.duckdb
