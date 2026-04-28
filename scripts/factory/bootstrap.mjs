@@ -217,6 +217,169 @@ Scripts should be used first for known operations.
 `;
 }
 
+async function ensureZoDashboard(scriptsTarget, workspace) {
+  // Generate a random alphanumeric password (12 chars, safe for identifiers)
+  const { randomBytes } = await import("node:crypto");
+  const password = randomBytes(8).toString("base64").replace(/[^a-zA-Z0-9]/g, "").slice(0, 12);
+
+  const dashboardContent = `import { useState } from "react";
+
+export default function ReferDashboard() {
+  const [locked, setLocked] = useState(true);
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState(false);
+  const DEFAULT_PASS = "${password}";
+  const CORRECT_PASS = DEFAULT_PASS;
+
+  const handleUnlock = (e) => {
+    e.preventDefault();
+    if (pass === CORRECT_PASS) {
+      setLocked(false);
+      setError(false);
+    } else {
+      setError(true);
+    }
+  };
+
+  if (locked) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700 mb-4">
+              <svg className="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.153c0 2.046-.347 4-.977 5.855M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">REFER Dashboard</h1>
+            <p className="text-zinc-400 text-sm">Enter your admin passkey to continue</p>
+          </div>
+          <form onSubmit={handleUnlock} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={pass}
+                onChange={(e) => { setPass(e.target.value); setError(false); }}
+                placeholder="Passkey"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white placeholder-zinc-500 text-center tracking-widest focus:outline-none focus:border-blue-500 transition-colors"
+                autoFocus
+              />
+              {error && (
+                <p className="mt-2 text-red-400 text-sm text-center">Invalid passkey. Try again.</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors"
+            >
+              Enter Dashboard
+            </button>
+          </form>
+          <p className="mt-6 text-center text-zinc-600 text-xs">Private — Zo Computer Refer System</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-white">
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">REFER Dashboard</h1>
+            <p className="text-zinc-400 mt-1">Token Tracker & Factory Monitor</p>
+          </div>
+          <button
+            onClick={() => setLocked(true)}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 rounded-lg text-sm transition-colors"
+          >
+            🔒 Lock
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-zinc-400 text-sm font-medium">Token Balance</span>
+            </div>
+            <p className="text-4xl font-bold text-green-400" id="token-balance">—</p>
+            <p className="text-zinc-500 text-sm mt-1">tokens remaining</p>
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full bg-blue-400" />
+              <span className="text-zinc-400 text-sm font-medium">Session Usage</span>
+            </div>
+            <p className="text-4xl font-bold text-blue-400" id="session-usage">—</p>
+            <p className="text-zinc-500 text-sm mt-1">tokens this session</p>
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full bg-yellow-400" />
+              <span className="text-zinc-400 text-sm font-medium">Est. Max Tokens</span>
+            </div>
+            <p className="text-4xl font-bold text-yellow-400">2M</p>
+            <p className="text-zinc-500 text-sm mt-1">monthly ceiling</p>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">📊 Fuel Gauge</h2>
+          <div className="relative h-4 bg-zinc-800 rounded-full overflow-hidden">
+            <div id="fuel-bar" className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-700" style={{ width: "100%" }} />
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-zinc-500">
+            <span>0</span>
+            <span id="fuel-pct">100%</span>
+            <span>2M</span>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">📜 Last Session</h2>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400 text-sm">Date</span>
+              <span className="text-sm" id="last-date">—</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400 text-sm">Input Chars</span>
+              <span className="text-sm" id="last-input-chars">—</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400 text-sm">Output Chars</span>
+              <span className="text-sm" id="last-output-chars">—</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-400 text-sm">Est. Tokens Used</span>
+              <span className="text-sm font-semibold text-blue-400" id="last-tokens">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <h2 className="text-lg font-semibold mb-4">🗂️ Scripts Registry</h2>
+          <div id="scripts-registry" className="space-y-2 text-sm text-zinc-400">
+            <p className="text-zinc-600 italic">Loading registry...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+`;
+
+  const fs = await import("node:fs");
+  // Save dashboard route source + password for Zo AI to deploy
+  const dashPath = join(workspace, "refer-dashboard-route.txt");
+  const metaPath = join(workspace, "refer-dashboard-meta.json");
+  fs.writeFileSync(dashPath, dashboardContent);
+  fs.writeFileSync(metaPath, JSON.stringify({ password, routePath: "/referdashboard" }, null, 2));
+  console.log("  Dashboard route source saved to workspace.");
+  return password;
+}
+
 async function main(argv) {
   const { repo, profile, local } = parseArgs(argv);
 
@@ -290,7 +453,11 @@ async function main(argv) {
   console.log("\n--- Installing scripts ---");
   await installScripts(scriptsTarget);
 
-  // ── 8. Write install state ────────────────────────────────────────
+  // ── 8. Create Zo dashboard page ──────────────────────────────────
+  console.log("\n--- Creating Zo dashboard ---");
+  const dashMeta = await ensureZoDashboard(scriptsTarget, WORKSPACE);
+
+  // ── 9. Write install state ───────────────────────────────────────
   const state = {
     machine_label: `${profile}-vipc`,
     installed_refer_version: manifest.refer_version,
@@ -303,13 +470,19 @@ async function main(argv) {
     startup_binding_version: 1,
     profile,
     active_runtime_root: skillsRoot,
+    dashboard_password: dashMeta,
   };
   writeFileSync(join(WORKSPACE, "refer-install-state.json"), JSON.stringify(state, null, 2));
 
   console.log(`\n✅ Bootstrap complete for profile: ${profile}`);
   console.log(`   Profile root: ${profileRoot}`);
   console.log(`   Scripts: ${scriptsTarget}`);
-  console.log(`   Run: node scripts/token/token-dashboard.mjs --stats`);
+  console.log(`   Dashboard: https://apostlej.zo.space/referdashboard`);
+  console.log(`   Dashboard password: ${dashMeta}`);
+  console.log(`\n📋 Next steps:`);
+  console.log(`   1. Edit the route code in Zo Space to deploy /referdashboard`);
+  console.log(`   2. Check refer-dashboard-meta.json for the generated password`);
+  console.log(`   3. Run: node scripts/token/token-dashboard.mjs --stats`);
 }
 
 main(process.argv.slice(2)).catch(err => {
