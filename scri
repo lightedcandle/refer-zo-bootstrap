@@ -1,0 +1,439 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-04-28",
+  "description": "REFER Script Factory Registry — aligned to scriptFactory.ts canonical entries",
+  "sections": [
+    {
+      "id": "request-intake",
+      "label": "Request Intake",
+      "description": "How work enters REFER",
+      "entries": [
+        {
+          "script_id": "request.type.chat",
+          "label": "@refer Chat Request",
+          "surface": "request-type",
+          "entrypoint": "Native VS Code Chat",
+          "does": "A user asks REFER for help from the VS Code Chat box.",
+          "detail": "The normal human-facing request type. Type @refer in VS Code Chat, REFER receives it, hands to Orchestrator.",
+          "script_kind": "Request Type",
+          "input_points": ["User"],
+          "exit_points": ["Agent", "Scripts"]
+        },
+        {
+          "script_id": "request.type.http",
+          "label": "HTTP Request",
+          "surface": "request-type",
+          "entrypoint": "POST /refer/chat",
+          "does": "Another app sends REFER a prompt through the local server.",
+          "detail": "For tools outside VS Code. Local apps/scripts send prompts to the server.",
+          "script_kind": "Request Type",
+          "input_points": ["Agent"],
+          "exit_points": ["Agent", "Scripts"]
+        },
+        {
+          "script_id": "request.type.command",
+          "label": "Command Request",
+          "surface": "request-type",
+          "entrypoint": "VS Code Command Palette",
+          "does": "A user starts a REFER action from the command palette.",
+          "detail": "Actions like Initialize Repo, Check for Updates, Refresh Codebases.",
+          "script_kind": "Request Type",
+          "input_points": ["User"],
+          "exit_points": ["User", "Repo"]
+        }
+      ]
+    },
+    {
+      "id": "runtime-entrypoints",
+      "label": "Runtime Entrypoints",
+      "description": "Runnable paths that start REFER work",
+      "entries": [
+        {
+          "script_id": "refer.chat.pipeline",
+          "label": "@refer Chat Pipeline",
+          "surface": "orchestration",
+          "entrypoint": "@refer Participant → REFER Orchestrator → Resolution Loop",
+          "does": "Receives your @refer message, runs the work pipeline, saves the result.",
+          "detail": "The normal @refer workflow as one multi script. Participant → Orchestrator → Context Picker → Resolution Loop.",
+          "script_kind": "Multi Script",
+          "input_points": ["User", "Agent", "Scripts"],
+          "exit_points": ["User", "Agent", "Repo", "Scripts"],
+          "child_scripts": ["refer.chat.participant", "refer.orchestrate.chat", "refer.context.picker", "refer.resolution.loop"]
+        },
+        {
+          "script_id": "refer.chat.participant",
+          "label": "@refer Participant",
+          "surface": "orchestration",
+          "entrypoint": "src/chat/referParticipant.ts#registerReferChatParticipant",
+          "does": "Makes @refer appear as a native VS Code Chat participant.",
+          "detail": "Connects VS Code Chat to REFER. Shows progress, handles simple controls (on/off/status).",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Scripts", "Agent"]
+        },
+        {
+          "script_id": "refer.orchestrate.chat",
+          "label": "REFER Orchestrator",
+          "surface": "orchestration",
+          "entrypoint": "src/chat/referOrchestratorRunner.ts#runReferOrchestratorPrompt",
+          "does": "Turns your @refer message into a tracked work request and saves the answer.",
+          "detail": "Saves what you asked, creates a smaller work order, sends to model, tracks steps, adds result to @Refer Chat History.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Agent"],
+          "exit_points": ["Agent", "Repo", "Scripts", "User"]
+        },
+        {
+          "script_id": "refer.context.picker",
+          "label": "Context Picker",
+          "surface": "orchestration",
+          "entrypoint": ".refer-factory/codebase-tree.json → .refer-factory/context-packs/<id>.json",
+          "does": "Builds a compact context pack for one bounded request.",
+          "detail": "Reads codebase tree, agent context, script legend, source anchors. Writes a prompt-specific context pack.",
+          "script_kind": "Single Script",
+          "input_points": ["Repo", "Scripts"],
+          "exit_points": ["Repo", "Agent"]
+        },
+        {
+          "script_id": "refer.resolution.loop",
+          "label": "Resolution Loop",
+          "surface": "orchestration",
+          "entrypoint": "src/chat/referResolutionLoop.ts#runReferResolutionLoop",
+          "does": "Keeps asking the model until REFER has a clear final outcome.",
+          "detail": "Prevents wandering. Checks each answer and stops when resolved, needs info, blocked, or failed.",
+          "script_kind": "Single Script",
+          "input_points": ["Agent"],
+          "exit_points": ["Agent", "Scripts"]
+        },
+        {
+          "script_id": "refer.script.legend",
+          "label": "Script Legend",
+          "surface": "orchestration",
+          "entrypoint": "src/contracts/scriptLegend.ts#createScriptLegend",
+          "does": "Defines the shared script terminology used by humans, agents, and local LLMs.",
+          "detail": "Explains terms like Single Script, Multi Script, Scriptograph, Scriptionary, Scriptonomy, status colors, input/exit points.",
+          "script_kind": "Single Script",
+          "input_points": ["Repo"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.scriptographer",
+          "label": "Scriptographer",
+          "surface": "orchestration",
+          "entrypoint": "src/contracts/scriptographer.ts#runScriptographer",
+          "does": "Discovers factory names and classifies whether they are ratified vocabulary.",
+          "detail": "Scans bounded sources, classifies names against Legend and Registry, writes scriptographer-report.json.",
+          "script_kind": "Single Script",
+          "input_points": ["Repo", "Scripts"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.scan.codebase",
+          "label": "Scan Codebase",
+          "surface": "orchestration",
+          "entrypoint": "src/commands/scanCodebase.ts#scanCodebaseCommand",
+          "does": "Builds a local map of this repo and opens the treefile.",
+          "detail": "Scans useful source, test, config, docs files. Writes codebase-tree.json and agent-context.md.",
+          "script_kind": "Single Script",
+          "input_points": ["Repo"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.scan.factoryGaps",
+          "label": "Scan Factory Gaps",
+          "surface": "orchestration",
+          "entrypoint": "src/commands/scanFactoryGaps.ts#scanFactoryGapsCommand",
+          "does": "Finds missing pieces in the Script Factory system.",
+          "detail": "Checks doctrine terms, registry entries, commands, artifacts, statuses, self-healing gaps. Writes factory-gaps.json.",
+          "script_kind": "Single Script",
+          "input_points": ["Repo", "Scripts"],
+          "exit_points": ["Repo"]
+        }
+      ]
+    },
+    {
+      "id": "command-surface",
+      "label": "Command Surface",
+      "description": "VS Code Command Palette actions",
+      "entries": [
+        {
+          "script_id": "refer.initializeRepo",
+          "label": "Initialize Repo",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Initialize Repo",
+          "does": "Sets up REFER files in a repo after showing you what will change.",
+          "detail": "Scans workspace, shows preview, applies after confirmation.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["User", "Repo"]
+        },
+        {
+          "script_id": "refer.emitSendContract",
+          "label": "Emit Send Contract",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Emit Send Contract Draft",
+          "does": "Opens a starter work contract you can review or edit.",
+          "detail": "Creates a draft describing work scope, target area, and acceptance criteria.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.emitScriptBlueprint",
+          "label": "Emit Script Blueprint",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Emit Script Blueprint",
+          "does": "Shows how a chat request can become a reusable script.",
+          "detail": "Opens a blueprint showing the stages from chat message to repeatable automation.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.emitScriptDnaSeed",
+          "label": "Emit Script DNA Seed",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Emit Script DNA Seed",
+          "does": "Starts a new custom script definition.",
+          "detail": "Opens a starter template with script name, expected inputs, outputs, rules, and checks.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.refreshCodebases",
+          "label": "Refresh Codebases",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Refresh Codebases",
+          "does": "Updates REFER's map of the current repo.",
+          "detail": "Scans workspace, updates map of projects, subfolders, and code areas.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.scanCodebase",
+          "label": "Scan Codebase",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Scan Codebase",
+          "does": "Runs the codebase scanner from the command palette.",
+          "detail": "Refreshes codebase treefile and compact agent context, opens treefile.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.viewCodebaseTree",
+          "label": "View Codebase Tree",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: View Codebase Tree",
+          "does": "Opens the latest codebase treefile in VS Code.",
+          "detail": "Inspect codebase-tree.json without running the scanner.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.scanFactoryGaps",
+          "label": "Scan Factory Gaps",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Scan Factory Gaps",
+          "does": "Runs the factory gap scanner from the command palette.",
+          "detail": "Checks for missing terminology, registry entries, commands, artifacts, statuses.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.viewFactoryGaps",
+          "label": "View Factory Gaps",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: View Factory Gaps",
+          "does": "Opens the latest factory gap report in VS Code.",
+          "detail": "Inspect factory-gaps.json without running the scanner.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.runScriptographer",
+          "label": "Run Scriptographer",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Run Scriptographer",
+          "does": "Runs the vocabulary discovery and classification scan.",
+          "detail": "Discovers factory names, classifies against Legend and Registry, writes report.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.viewScriptographerReport",
+          "label": "View Scriptographer Report",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: View Scriptographer Report",
+          "does": "Opens the latest Scriptographer report in VS Code.",
+          "detail": "Inspect discovered names and ratification status without re-running.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "refer.checkForUpdates",
+          "label": "Check For Updates",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Check for Updates",
+          "does": "Checks whether REFER has updates available.",
+          "detail": "Reports what would need to change without applying anything.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["User"]
+        },
+        {
+          "script_id": "refer.applyUpdate",
+          "label": "Apply Update",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Apply Update",
+          "does": "Installs pending REFER updates after you approve them.",
+          "detail": "Backs up existing files, applies updates, records state, reports failures.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "refer.contractModeOn",
+          "label": "Contract Mode On",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Contract Mode On",
+          "does": "Keeps REFER contract mode on for future chat turns.",
+          "detail": "Every future @refer turn treated as governed contract work until turned off.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["User"]
+        },
+        {
+          "script_id": "refer.contractModeOff",
+          "label": "Contract Mode Off",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Contract Mode Off",
+          "does": "Turns off always-on contract mode.",
+          "detail": "Individual @refer messages can still use temporary contract tracking.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["User"]
+        },
+        {
+          "script_id": "refer.contractModeToggle",
+          "label": "Toggle Contract Mode",
+          "surface": "vscode-command",
+          "entrypoint": "REFER: Toggle Contract Mode",
+          "does": "Switches always-on contract mode to the opposite state.",
+          "detail": "Checks current setting and flips it.",
+          "script_kind": "Single Script",
+          "input_points": ["User"],
+          "exit_points": ["User"]
+        }
+      ]
+    },
+    {
+      "id": "http-endpoint-surface",
+      "label": "HTTP Endpoint Surface",
+      "description": "Local server routes for external tools",
+      "entries": [
+        {
+          "script_id": "refer.server.chat",
+          "label": "Server Chat Route",
+          "surface": "http-endpoint",
+          "entrypoint": "POST /refer/chat",
+          "does": "Lets another app send a prompt to REFER over HTTP.",
+          "detail": "Receives prompt, chooses workspace, runs the @refer flow, returns structured result.",
+          "script_kind": "Single Script",
+          "input_points": ["Agent"],
+          "exit_points": ["Agent", "Scripts"]
+        },
+        {
+          "script_id": "refer.server.health",
+          "label": "Server Health Route",
+          "surface": "http-endpoint",
+          "entrypoint": "GET /health",
+          "does": "Checks whether the local REFER server is running.",
+          "detail": "Shows server alive status, workspace, model provider, available routes.",
+          "script_kind": "Single Script",
+          "input_points": ["Agent"],
+          "exit_points": ["Agent"]
+        },
+        {
+          "script_id": "refer.server.targets",
+          "label": "Server Targets Route",
+          "surface": "http-endpoint",
+          "entrypoint": "GET /refer/targets",
+          "does": "Shows which local workspaces the server can work on.",
+          "detail": "Lists workspaces before sending a server prompt when you have multiple projects.",
+          "script_kind": "Single Script",
+          "input_points": ["Agent"],
+          "exit_points": ["Agent"]
+        }
+      ]
+    },
+    {
+      "id": "npm-scripts",
+      "label": "NPM Scripts",
+      "description": "Build, test, and serve commands",
+      "entries": [
+        {
+          "script_id": "npm.compile",
+          "label": "Compile",
+          "surface": "npm",
+          "entrypoint": "npm run compile",
+          "does": "Builds the extension code.",
+          "detail": "Checks TypeScript for compile errors, writes JavaScript to dist folder.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["Repo"]
+        },
+        {
+          "script_id": "npm.test",
+          "label": "Test",
+          "surface": "npm",
+          "entrypoint": "npm run test",
+          "does": "Checks that the project still works after changes.",
+          "detail": "Builds extension, runs full test suite for metrics, process, bootstrap, contracts, schemas, law, updates.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "npm.verify",
+          "label": "Verify",
+          "surface": "npm",
+          "entrypoint": "npm run verify",
+          "does": "Runs the same full project check as npm test.",
+          "detail": "Standard verification command. Same quality gate as npm test.",
+          "script_kind": "Single Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["Repo", "User"]
+        },
+        {
+          "script_id": "npm.refer.server",
+          "label": "REFER Server",
+          "surface": "npm",
+          "entrypoint": "npm run refer:server",
+          "does": "Runs REFER as a local server instead of only inside VS Code.",
+          "detail": "Builds project, starts server so routes like /refer/chat can receive prompts.",
+          "script_kind": "Multi Script",
+          "input_points": ["User", "Repo"],
+          "exit_points": ["Agent", "Scripts"],
+          "child_scripts": ["npm.compile", "refer.server.health", "refer.server.targets", "refer.server.chat"]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_entries": 33,
+    "by_surface": {
+      "request-type": 3,
+      "orchestration": 8,
+      "vscode-command": 16,
+      "http-endpoint": 3,
+      "npm": 4
+    }
+  }
+}
