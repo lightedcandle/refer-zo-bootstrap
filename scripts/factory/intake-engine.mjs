@@ -23,7 +23,15 @@ import { fileURLToPath } from "node:url";
 import { printIntakeQuestions, printContract, printExecutionResult, printAIGateway } from "./lib/ui.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REGISTRY_FILE = join(__dirname, "script-registry.json");
+const REGISTRY_FILE = join(SCRIPTS_DIR, "script-registry.json");
+const PROCESS_FILE = join(SCRIPTS_DIR, "process-events.jsonl");
+const LEGEND_FILE = join(SCRIPTS_DIR, "script-legend.md");
+const SELF_REPAIR = [
+  "What did we need that did not exist yet?",
+  "What was ambiguous?",
+  "What had to be manually inferred?",
+  "What should become a script, context asset, test, status, or doctrine rule?",
+];
 const SCRIPTS_DIR = join(__dirname, "artifacts");
 const LOG_FILE = join(__dirname, "execution-log.jsonl");
 const FACTORY_LOG = join(__dirname, "factory-log.jsonl");

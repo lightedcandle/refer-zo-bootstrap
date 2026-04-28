@@ -1,146 +1,122 @@
-/**
- * script-registry.json
- * 
- * This is the single source of truth for all available scripts.
- * Scripts register themselves here on execution.
- * The intake engine reads this file to find matching scripts.
- * 
- * Auto-generated. Do not edit manually.
- */
-
 {
-  "version": "1.0",
-  "updatedAt": "",
-  "scripts": [
+  "version": "1.0.0",
+  "updated": "2026-04-28T04:12:00Z",
+  "forges": [
     {
-      "id": "form-add",
-      "trigger": ["add form", "new form", "create form", "form"],
-      "description": "Add a form with field configuration",
-      "category": "component",
-      "questions": [
-        { "id": "form-type", "label": "Form type", "type": "select", "options": ["Add", "Edit", "View", "Search"], "required": true },
-        { "id": "fields", "label": "Field coverage", "type": "select", "options": ["Minimal (2-3)", "Standard (5-7)", "Full (10+)"], "required": true },
-        { "id": "submit-style", "label": "Submit style", "type": "select", "options": ["Single", "Dual (Save + Cancel)"], "required": false }
-      ],
-      "output": "Zo Space route (page or API)"
+      "id": "intake-engine",
+      "name": "Intake Engine",
+      "type": "gate",
+      "description": "Gatekeeper — routes prompts, approves AI involvement",
+      "trigger_intents": ["add", "build", "create", "show", "deploy", "scan", "run"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "questions": []
+    },
+    {
+      "id": "auto-capture",
+      "name": "Auto-Capture Loop",
+      "type": "forge",
+      "description": "Watches for missing scripts, seeds new ones from AI solutions",
+      "trigger_intents": [],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": true,
+      "self_repair_checklist": [
+        "What did we need that did not exist yet?",
+        "What was ambiguous?",
+        "What had to be manually inferred?",
+        "What should become a script, context asset, test, status, or doctrine rule?"
+      ]
     },
     {
       "id": "button-add",
-      "trigger": ["add button", "new button", "button", "create button"],
-      "description": "Add a button component",
-      "category": "element",
-      "questions": [
-        { "id": "button-label", "label": "Button label", "type": "text", "required": true },
-        { "id": "button-variant", "label": "Style", "type": "select", "options": ["Primary", "Secondary", "Ghost"], "required": true },
-        { "id": "button-size", "label": "Size", "type": "select", "options": ["sm", "md", "lg"], "required": false }
-      ],
-      "output": "Button component code"
+      "name": "Button Add",
+      "type": "forge",
+      "description": "Add button to a page route with anchored placement",
+      "trigger_intents": ["add button"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/button-add.mjs",
+      "script_dna": {
+        "opcodes": ["READ_CONTRACT", "RESOLVE_TARGET", "CHECK_GUARD", "WRITE_FILE"],
+        "input_ports": ["anchor_id", "label", "variant"],
+        "output_ports": ["file", "element_id"],
+        "guards": ["anchor_must_exist", "route_must_exist"]
+      }
     },
     {
       "id": "page-add",
-      "trigger": ["add page", "new page", "create page", "page"],
-      "description": "Add a new page to the app",
-      "category": "page",
-      "questions": [
-        { "id": "page-path", "label": "Page path (e.g. /admin/users)", "type": "text", "required": true },
-        { "id": "page-type", "label": "Page type", "type": "select", "options": ["Public", "Private", "API"], "required": true },
-        { "id": "has-sidebar", "label": "Include sidebar?", "type": "select", "options": ["Yes", "No"], "required": false }
-      ],
-      "output": "Zo Space route file"
+      "name": "Page Add",
+      "type": "forge",
+      "description": "Create full page route with standard anchors (hero, content, footer)",
+      "trigger_intents": ["add page", "create page"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/page-add.mjs",
+      "anchors": ["hero", "content", "footer"]
     },
     {
-      "id": "field-add",
-      "trigger": ["add field", "new field", "field", "form field"],
-      "description": "Add a field to an existing form",
-      "category": "element",
-      "questions": [
-        { "id": "field-type", "label": "Field type", "type": "select", "options": ["Text", "Number", "Email", "Select", "Checkbox", "Date", "Textarea"], "required": true },
-        { "id": "field-label", "label": "Field label", "type": "text", "required": true },
-        { "id": "field-name", "label": "Field name (id)", "type": "text", "required": true },
-        { "id": "required", "label": "Required?", "type": "select", "options": ["Yes", "No"], "required": false }
-      ],
-      "output": "Field component code"
-    },
-    {
-      "id": "table-add",
-      "trigger": ["add table", "new table", "data table", "table view"],
-      "description": "Add a data table component",
-      "category": "component",
-      "questions": [
-        { "id": "data-source", "label": "Data source", "type": "text", "required": true },
-        { "id": "columns", "label": "Columns (comma-separated)", "type": "text", "required": true },
-        { "id": "has-search", "label": "Include search?", "type": "select", "options": ["Yes", "No"], "required": false },
-        { "id": "has-pagination", "label": "Include pagination?", "type": "select", "options": ["Yes", "No"], "required": false }
-      ],
-      "output": "Table component"
-    },
-    {
-      "id": "nav-add",
-      "trigger": ["add nav", "add link", "navigation", "menu item"],
-      "description": "Add navigation link",
-      "category": "navigation",
-      "questions": [
-        { "id": "nav-label", "label": "Link label", "type": "text", "required": true },
-        { "id": "nav-path", "label": "Link path", "type": "text", "required": true },
-        { "id": "nav-section", "label": "Nav section", "type": "select", "options": ["Sidebar", "Header", "Footer"], "required": true }
-      ],
-      "output": "Nav link component"
-    },
-    {
-      "id": "deploy-pages",
-      "trigger": ["deploy", "publish", "push live", "ship"],
-      "description": "Deploy to Cloudflare Pages",
-      "category": "deploy",
-      "questions": [
-        { "id": "target", "label": "Deploy target", "type": "select", "options": ["staging", "production"], "required": true },
-        { "id": "include-db", "label": "Run migrations first?", "type": "select", "options": ["Yes", "No"], "required": false }
-      ],
-      "output": "Wrangler deploy command"
+      "id": "form-add",
+      "name": "Form Add",
+      "type": "forge",
+      "description": "Create form on a page with field definitions",
+      "trigger_intents": ["add form"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/form-add.mjs"
     },
     {
       "id": "git-commit",
-      "trigger": ["commit", "save changes", "checkpoint"],
-      "description": "Git commit with message",
-      "category": "git",
-      "questions": [
-        { "id": "commit-message", "label": "Commit message", "type": "text", "required": true },
-        { "id": "commit-type", "label": "Change type", "type": "select", "options": ["feat", "fix", "docs", "refactor", "chore"], "required": false }
-      ],
-      "output": "git commit command"
+      "name": "Git Commit",
+      "type": "forge",
+      "description": "Stage all → commit with message → push to remote",
+      "trigger_intents": ["commit", "push"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/git-commit.mjs"
+    },
+    {
+      "id": "deploy-pages",
+      "name": "Deploy Pages",
+      "type": "forge",
+      "description": "Git add → commit → push → Cloudflare Wrangler deploy",
+      "trigger_intents": ["deploy"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/deploy-pages.mjs"
     },
     {
       "id": "scan-workspace",
-      "trigger": ["scan", "workspace", "what do we have", "show me"],
-      "description": "Scan workspace and emit codebase tree",
-      "category": "tool",
-      "questions": [],
-      "output": "codebase tree file"
-    },
-    {
-      "id": "token-stats",
-      "trigger": ["tokens", "fuel", "usage", "cost"],
-      "description": "Show token usage stats",
-      "category": "tool",
-      "questions": [],
-      "output": "token dashboard data"
-    },
-    {
-      "id": "route-list",
-      "trigger": ["list routes", "show routes", "routes"],
-      "description": "List all Zo Space routes",
-      "category": "tool",
-      "questions": [],
-      "output": "routes list"
-    },
-    {
-      "id": "service-restart",
-      "trigger": ["restart", "reboot", "reload service"],
-      "description": "Restart a user service",
-      "category": "ops",
-      "questions": [
-        { "id": "service-name", "label": "Service name", "type": "text", "required": true }
-      ],
-      "output": "restart command"
+      "name": "Scan Workspace",
+      "type": "forge",
+      "description": "Index workspace files → emit codebase-tree.json",
+      "trigger_intents": ["scan", "index"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/scan-workspace.mjs"
     }
   ]
 }
