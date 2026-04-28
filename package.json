@@ -1,8 +1,8 @@
 {
   "name": "refer-zo-bootstrap",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
-  "description": "Portable REFER bootstrap package for Zo Files, personas, rules, skills, and REFER.OS law.",
+  "description": "Portable REFER bootstrap for Zo — installs skills, personas, rules, and REFER.OS law from a cloned GitHub repo.",
   "type": "module",
   "bin": {
     "refer-zo-bootstrap": "./tools/vipc-bootstrap.mjs",
@@ -15,6 +15,13 @@
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightedcandle/refer-zo-bootstrap.git"
+  },
+  "homepage": "https://github.com/lightedcandle/refer-zo-bootstrap",
+  "keywords": ["refer", "zo", "bootstrap", "skills", "vipc", "agent", "governance"],
+  "license": "MIT",
   "files": [
     "AGENTS.md",
     "docs/",
@@ -22,13 +29,5 @@
     "skills/",
     "tools/",
     "refer-install-state.json"
-  ],
-  "keywords": [
-    "refer",
-    "zo",
-    "bootstrap",
-    "skills",
-    "vipc"
-  ],
-  "license": "UNLICENSED"
+  ]
 }

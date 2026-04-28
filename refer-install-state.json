@@ -1,14 +1,19 @@
 {
-  "machine_label": "template",
+  "machine_label": "refer-zo-bootstrap-template",
   "installed_refer_version": "0.2.0",
   "installed_skill_library_version": "0.2.0",
   "update_channel": "stable",
-  "last_checked_at": "2026-04-24",
-  "last_installed_at": "2026-04-24",
+  "last_checked_at": "2026-04-28",
+  "last_installed_at": null,
   "bootstrap_complete": false,
   "startup_binding_installed": false,
   "startup_binding_version": 1,
   "active_runtime_root": "Zo Files/Skills",
-  "portable_library_root": "E:/refer/zo-computer/skills",
+  "portable_library_root": "./skills",
+  "authority_roots": [
+    "Zo Files/agent.md",
+    "Zo Files/AGENTS.md",
+    "Zo Files/REFER.OS"
+  ],
   "local_overrides": []
 }
