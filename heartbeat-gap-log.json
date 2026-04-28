@@ -1,0 +1,26 @@
+{
+  "ts": "2026-04-28T05:47:47.529Z",
+  "runs": 1,
+  "gaps": [
+    {
+      "type": "missing",
+      "category": "context",
+      "name": "codebase-tree",
+      "severity": "medium",
+      "note": "run scan-workspace to generate"
+    },
+    {
+      "type": "unregistered",
+      "category": "scripts",
+      "names": [
+        "button-add.mjs",
+        "deploy-pages.mjs",
+        "form-add.mjs",
+        "git-commit.mjs",
+        "page-add.mjs",
+        "scan-workspace.mjs"
+      ],
+      "severity": "low"
+    }
+  ]
+}

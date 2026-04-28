@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-04-28T04:12:00Z",
+  "forges": [
+    {
+      "id": "intake-engine",
+      "name": "Intake Engine",
+      "type": "gate",
+      "description": "Gatekeeper — routes prompts, approves AI involvement",
+      "trigger_intents": ["add", "build", "create", "show", "deploy", "scan", "run"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "questions": []
+    },
+    {
+      "id": "auto-capture",
+      "name": "Auto-Capture Loop",
+      "type": "forge",
+      "description": "Watches for missing scripts, seeds new ones from AI solutions",
+      "trigger_intents": [],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": true,
+      "self_repair_checklist": [
+        "What did we need that did not exist yet?",
+        "What was ambiguous?",
+        "What had to be manually inferred?",
+        "What should become a script, context asset, test, status, or doctrine rule?"
+      ]
+    },
+    {
+      "id": "button-add",
+      "name": "Button Add",
+      "type": "forge",
+      "description": "Add button to a page route with anchored placement",
+      "trigger_intents": ["add button"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/button-add.mjs",
+      "script_dna": {
+        "opcodes": ["READ_CONTRACT", "RESOLVE_TARGET", "CHECK_GUARD", "WRITE_FILE"],
+        "input_ports": ["anchor_id", "label", "variant"],
+        "output_ports": ["file", "element_id"],
+        "guards": ["anchor_must_exist", "route_must_exist"]
+      }
+    },
+    {
+      "id": "page-add",
+      "name": "Page Add",
+      "type": "forge",
+      "description": "Create full page route with standard anchors (hero, content, footer)",
+      "trigger_intents": ["add page", "create page"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/page-add.mjs",
+      "anchors": ["hero", "content", "footer"]
+    },
+    {
+      "id": "form-add",
+      "name": "Form Add",
+      "type": "forge",
+      "description": "Create form on a page with field definitions",
+      "trigger_intents": ["add form"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/form-add.mjs"
+    },
+    {
+      "id": "git-commit",
+      "name": "Git Commit",
+      "type": "forge",
+      "description": "Stage all → commit with message → push to remote",
+      "trigger_intents": ["commit", "push"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/git-commit.mjs"
+    },
+    {
+      "id": "deploy-pages",
+      "name": "Deploy Pages",
+      "type": "forge",
+      "description": "Git add → commit → push → Cloudflare Wrangler deploy",
+      "trigger_intents": ["deploy"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/deploy-pages.mjs"
+    },
+    {
+      "id": "scan-workspace",
+      "name": "Scan Workspace",
+      "type": "forge",
+      "description": "Index workspace files → emit codebase-tree.json",
+      "trigger_intents": ["scan", "index"],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "script_file": "artifacts/scan-workspace.mjs"
+    }
+  ]
+}

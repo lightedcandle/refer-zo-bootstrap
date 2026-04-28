@@ -1,113 +1,94 @@
-# REFER Script Factory Agent Governance
+# refer-zo-bootstrap — Zo-Native REFER Bootstrap
 
-This repo is governed by REFER.
+**Version:** 0.3.0  
+**Purpose:** Factory-first Zo computer bootstrap via git.  
+**Git repo:** https://github.com/lightedcandle/refer-zo-bootstrap
 
-## Repo Purpose
+---
 
-`refer-script-factory` is the seed implementation of the REFER Script Factory. Its job is to grow from a hand-authored VS Code extension into a self-indexing, self-describing, script-driven factory that can build and maintain its own script system with minimal dependence on remote AI.
+## What This Repo Is
 
-The factory should mature toward local-first operation:
+Portable bootstrap that installs into any Zo computer from a single git clone.
+Gives Zo:
+- Startup binder (`agent.md` + `AGENTS.md`)
+- `REFER.OS` law files (selected, Zo-appropriate)
+- 8 universal skills under `Skills/`
+- 5 factory scripts + 2 token scripts under `Scripts/`
+- Token fuel tracker with dashboard
 
-- scan its own codebase;
-- build and refresh its own treefile;
-- maintain a script registry;
-- maintain a script legend;
-- package compact agent context;
-- route prompts through governed scripts;
-- prefer local LLM/context workflows when sufficient.
+## Factory-First Doctrine
 
-The factory doctrine is documented in `docs/factory-system-doctrine.md`: a forge is the conversion unit, the Script Factory is the governance layer that manages script forges, and the Factory System is the complete network of coordinated factories.
-
-## Default Prompt Flow
-
-Treat user prompts as intake for a contract-first workflow:
-
-1. Decode the prompt into a compact `refer.intake` contract.
-2. Route work through the Script Factory vocabulary in `docs/script-legend.md`.
-3. Use `.refer-factory/codebase-tree.json` and `.refer-factory/agent-context.md` when present before scanning files broadly.
-4. If context assets are stale or missing, prefer the `Scan Codebase` script path.
-5. If enough information exists, answer plainly and briefly.
-6. If repo facts are needed, propose or run a bounded script request instead of guessing.
-7. Do not execute scripts automatically unless the user or governed runner explicitly allows it.
-
-## Script Factory Self-Build Doctrine
-
-The Script Factory is a seed that builds itself when fed information.
-
-Each chat response should feed the factory. After resolving a request, ask what local forge, script, context asset, registry entry, prompt pattern, status event, test, or documentation update would let REFER resolve the same kind of request locally next time.
-
-Each turn should also self-heal the factory when it exposes a gap. Look for missing terminology, ambiguous categories, weak descriptions, stale scans, missing relationships, missing tests, missing statuses, and unknown needs discovered during use.
-
-Use this repair checklist:
-
-1. What did we need that did not exist yet?
-2. What was ambiguous?
-3. What had to be manually inferred?
-4. What should become a script, context asset, test, status, or doctrine rule?
-
-Use the factory vocabulary precisely:
-
-- `Forge`: one bounded conversion unit.
-- `Script Factory`: the system that creates, manages, and runs script forges.
-- `Factory System`: the complete network of coordinated factories across domains.
-
-- The source registry lives in `src/contracts/scriptFactory.ts`.
-- The script terminology authority lives in `src/contracts/scriptLegend.ts` and `docs/script-legend.md`.
-- The codebase scanner lives in `src/contracts/codebaseTree.ts` and `src/commands/scanCodebase.ts`.
-- The Script Factory UI lives in `src/cockpit/scriptFactoryPanel.ts`.
-- The native `@refer` entrypoint lives in `src/chat/referParticipant.ts`.
-- The orchestration runner lives in `src/chat/referOrchestratorRunner.ts`.
-- The resolution loop lives in `src/chat/referResolutionLoop.ts`.
-
-When adding factory capability, keep the loop deterministic:
-
-1. Add or update the script definition.
-2. Add or update the command/runner if it is executable.
-3. Add status/process events when it runs.
-4. Add scan/tree/context outputs if it creates artifacts.
-5. Update the Script Legend when new terms or categories appear.
-6. Verify with `npm run test`.
-
-## Script Rules
-
-- Scripts return structured packets or durable artifacts to REFER.
-- Scripts must record process status when they run.
-- Scripts may detect sensitive file names.
-- Scripts must not read or send contents of `.env*`, keys, certificates, or private credentials.
-- Repo facts should come from bounded scripts, treefiles, or direct source reads, not guessing.
-- Multi Script entries must list child scripts.
-- Single Script entries must represent one bounded operation.
-- Request Type entries are category labels, not runnable scripts.
-
-## Local-First Context Rules
-
-Prefer compact local context over broad remote prompting.
-
-- Use `.refer-factory/codebase-tree.json` as the machine-readable repository map.
-- Use `.refer-factory/agent-context.md` as the compact agent briefing.
-- Use `.refer-factory/script-legend.md` as terminology authority after scan generation.
-- Send local/remote models a context pack, not the whole repo.
-- Open full source files only when the treefile or task requires them.
-
-## Tracking
-
-- Process state: `.refer-factory/process-state.json`
-- Codebase tree: `.refer-factory/codebase-tree.json`
-- Agent context: `.refer-factory/agent-context.md`
-- Script legend: `.refer-factory/script-legend.md`
-- Codebase/subspace registry: `.refer-factory/codebases.json`
-- Chat sessions: `.refer-factory/chat/sessions/`
-
-## Verification
-
-Use:
-
-```powershell
-npm run test
+```
+Script → Registry lookup → Existing artifact → AI generation
 ```
 
-For narrow compile checks, use:
+- **Scripts** do repetitive work (bootstrap, sync, scan, emit, register)
+- **AI** reasons and handles novelty
+- **Every successful pattern** gets registered for reuse
+- This reduces token burn by replacing repeated AI calls with durable machinery
 
-```powershell
-npm run compile
+## Skill Library (8 Skills)
+
+| Skill | Role |
+|---|---|
+| `refer-os` | Startup binder — read agent.md/AGENTS.md first |
+| `refer-zo-intake-router` | Classify every request before acting |
+| `refer-governance` | Law updates, authority drift, routing checks |
+| `refer-contract-tandem` | Zo↔Codex bridge, bounded tracker execution |
+| `refer-library-bootstrap` | Skill version reconciliation on boot |
+| `refer-build-director` | Autonomous pendulum orchestrator (activate via automation) |
+| `refer-design-driver` | Universal visual design overlay (any platform) |
+| `refer-operator-driver` | Repo/workspace-connected work engine |
+
+## Scripts
+
+**Factory scripts** (`scripts/factory/`):
+- `bootstrap.mjs` — Bootstrap a new profile from git
+- `sync-skill.mjs` — Sync one skill from repo to Zo Files
+- `scan-workspace.mjs` — Emit workspace code tree for AI context
+- `emit-contract.mjs` — Derive Send Contract from Plan markdown
+- `register-artifact.mjs` — Register successful artifact for reuse
+
+**Token scripts** (`scripts/token/`):
+- `token-tracker.mjs` — Track token usage per session (4 chars/token estimate)
+- `token-dashboard.mjs` — Generate HTML fuel dashboard
+
+Run scripts with: `node scripts/<category>/<script>.mjs --help`
+
+## Install
+
+```bash
+git clone https://github.com/lightedcandle/refer-zo-bootstrap.git
+cd refer-zo-bootstrap
+node scripts/factory/bootstrap.mjs --profile <name> --repo . --local
 ```
+
+Or remotely:
+```bash
+node scripts/factory/bootstrap.mjs --profile myapp --repo https://github.com/you/refer-zo-bootstrap.git
+```
+
+## Law Files (Selected for Zo)
+
+Zo-appropriate only. Strictly Codex-specific docs (Angular compiler, spirit runtime, etc.) are pruned.
+
+Included: `refer.md`, `refer.zo.md`, `refer.os.md`, `refer.skills.md`, `refer.plan.md`, `refer.flow.md`, `refer.governance.md`, `refer.factory.md`, `refer.engine.md`, `refer.efficiency.md`, `refer.supabase.md`, `refer.github.md`, `refer.file.md`, `refer.build.md`, `refer.commit.md`, `refer.qc.md`, `refer.branch.md`, `refer.odometer.md`, `refer.instantiation.md`, `refer.daylight.md`, `refer.shortlink.md`, `refer.honeycomb.md`, `refer.design.md`, `refer.structure.md`, `refer.auth.md`, `refer.stripe.md`, `refer.ontology.md`, `refer.api.md`, `refer.migrate.md`, `refer.combing.md`, `refer.expand.md`, `refer.repair.md`, `refer.seamless-ui.md`, `refer.identity.md`, `refer.cron.md`, `refer.systems.security.md`, `refer.talents.md`, `refer.og.md`, `refer.codebases.md`, `refer.law.index.md`, `refer.law.md`, `refer.law.crossref.md`, `refer.audit.md`, `refer.provider.google.md`
+
+Excluded: Angular-specific, Codex provider docs, spirit runtime, compiler docs, tribal E2E artifacts.
+
+## Token Discipline
+
+- Every session: `node scripts/token/token-tracker.mjs --input "..." --output "..."`
+- Watch fuel: `node scripts/token/token-dashboard.mjs --stats`
+- If fuel > 80%, pause heavy AI work and alert
+- Scripts first — they cost zero AI tokens
+
+## Startup Binding
+
+On every session start, Zo reads:
+1. `agent.md` (if present in Zo Files workspace root)
+2. `AGENTS.md` (if present)
+3. `Skills/refer-os/SKILL.md` (entry wrapper)
+4. `REFER.OS/refer.md` (router)
+
+Skills load beneath these binders. Authority lives in law files, not in unstated memory.

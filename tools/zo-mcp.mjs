@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join } from "node:path";
 import { performance } from "node:perf_hooks";
 
 const MCP_URL = "https://api.zo.computer/mcp";
 const PROTOCOL_VERSION = "2024-11-05";
-const LEDGER_PATH = "E:/refer/zo-computer/usage/zo-mcp-usage.jsonl";
+const LEDGER_PATH = join(process.cwd(), "usage/zo-mcp-usage.jsonl");
 
 function parseDotEnv(text) {
   const out = {};
@@ -72,9 +72,9 @@ function parseArgs(argv) {
 
 function printUsage() {
   console.error(`Usage:
-  node E:/refer/zo-computer/tools/zo-mcp.mjs list-tools [--instance refer|telechurch|jamaicaeats] [--json]
-  node E:/refer/zo-computer/tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args '{"key":"value"}' [--json]
-  node E:/refer/zo-computer/tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args64 <base64-json> [--json]
+  node tools/zo-mcp.mjs list-tools [--instance refer|telechurch|jamaicaeats] [--json]
+  node tools/zo-mcp.mjs call <tool_name> --instance <instance> --args '{"key":"value"}' [--json]
+  node tools/zo-mcp.mjs call <tool_name> --instance <instance> --args64 <base64-json> [--json]
 
 Examples:
   node tools/zo-mcp.mjs call run_bash_command --args '{"cmd":"pwd"}' --json

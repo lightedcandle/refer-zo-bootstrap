@@ -88,7 +88,7 @@ The same skeleton can receive a stronger presentation without changing structure
 
 ### Skeleton-to-Flesh Contract
 
-Use when given a skeleton and asked for visual design specs, style contract, or design instructions.
+Use when given a skeleton and asked for visual design spec, style contract, or design instructions.
 
 Output a contract only. Do not edit files or pages unless explicitly told to mutate.
 
@@ -203,7 +203,7 @@ For contract-only work, respond with:
 For mutation work, respond with:
 
 - changed routes/files
-- whether structure was locked or consult-mode
+- whether structure was Locked or consult-mode
 - what visual decisions changed
 - `Structural Recommendations`, if any
 - inspection URL

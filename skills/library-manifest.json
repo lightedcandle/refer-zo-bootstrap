@@ -1,31 +1,34 @@
 {
   "library_name": "refer-skill-library",
-  "library_version": "0.2.0",
-  "refer_version": "0.2.0",
+  "library_version": "0.3.0",
+  "refer_version": "0.3.0",
   "update_channel": "stable",
-  "released_at": "2026-04-24",
-  "hub_description": "REFER is a reference-first operating system and skill library for Zo. It turns normal chat into governed execution by interpreting intent through one canonical router, keeping work aligned to law and referenced truth instead of drift, contradiction, or ad hoc building.",
+  "released_at": "2026-04-28",
+  "hub_description": "REFER is a reference-first operating system and skill library for Zo. It turns normal chat into governed execution using factory-first principles — scripts do the work, AI reasons for novelty. Token discipline is enforced via a fuel dashboard.",
   "hub_icon": "anchor",
   "credit_attribution": {
     "name": "REFER.OS",
     "author_name": "Calvin Anderson",
     "author_alias": "ApostleJ",
     "author_site": "https://telechurchlive.com",
-    "summary": "REFER.OS reference-first governance and skill system for Zo.",
-    "attribution": "Built from REFER.OS governance and routed workflow doctrine by Calvin Anderson (ApostleJ), adapted into Zo-native skills for Telechurch tandem operation."
+    "summary": "Factory-first Zo bootstrap with portable scripts, token tracking, and universal design/operator/build-director skills."
   },
   "bootstrap_skill": "refer-library-bootstrap",
   "entry_skill": "refer-os",
   "startup_binding_required": true,
   "startup_binding_version": 1,
   "active_runtime_root": "Zo Files/Skills",
-  "portable_library_root": "E:/refer/zo-computer/skills",
-  "authority_roots": [
-    "E:/refer.os/REFER.OS",
-    "E:/refer.os/agent.md",
-    "Zo Files/agent.md",
-    "Zo Files/AGENTS.md",
-    "Zo Files/REFER.OS"
+  "portable_library_root": "skills/",
+  "factory_scripts": [
+    "scripts/factory/bootstrap.mjs",
+    "scripts/factory/sync-skill.mjs",
+    "scripts/factory/scan-workspace.mjs",
+    "scripts/factory/emit-contract.mjs",
+    "scripts/factory/register-artifact.mjs"
+  ],
+  "token_scripts": [
+    "scripts/token/token-tracker.mjs",
+    "scripts/token/token-dashboard.mjs"
   ],
   "universal_skills": [
     "refer-os",
@@ -33,18 +36,14 @@
     "refer-governance",
     "refer-contract-tandem",
     "refer-library-bootstrap",
-    "refer-vipc-build-director",
-    "refer-vipc-operator-driver",
-    "refer-vipc-design-driver"
+    "refer-build-director",
+    "refer-design-driver",
+    "refer-operator-driver"
   ],
   "prompt_policy": {
     "default": "prompt_if_behind",
     "critical": "prompt_priority",
     "mid_session": "do_not_force",
-    "options": [
-      "update_now",
-      "remind_later",
-      "skip_this_version"
-    ]
+    "options": ["update_now", "remind_later", "skip_this_version"]
   }
 }

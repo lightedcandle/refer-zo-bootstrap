@@ -1,19 +1,16 @@
 {
   "name": "refer-zo-bootstrap",
-  "version": "0.1.0",
-  "private": false,
-  "description": "Portable REFER bootstrap package for Zo Files, personas, rules, skills, and REFER.OS law.",
-  "type": "module",
-  "bin": {
-    "refer-zo-bootstrap": "./tools/vipc-bootstrap.mjs",
-    "refer-zo-mcp": "./tools/zo-mcp.mjs"
-  },
+  "version": "0.3.0",
   "scripts": {
     "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs",
-    "bootstrap": "node tools/vipc-bootstrap.mjs"
-  },
-  "engines": {
-    "node": ">=20"
+    "bootstrap": "node tools/vipc-bootstrap.mjs --profile refer --instance refer",
+    "token:track": "node scripts/token/token-tracker.mjs",
+    "token:dashboard": "node scripts/token/token-dashboard.mjs",
+    "factory:scan": "node scripts/factory/scan-workspace.mjs",
+    "factory:sync": "node scripts/factory/sync-skill.mjs",
+    "factory:contract": "node scripts/factory/emit-contract.mjs",
+    "factory:register": "node scripts/factory/register-artifact.mjs",
+    "factory:bootstrap": "node scripts/factory/bootstrap.mjs --profile refer"
   },
   "files": [
     "AGENTS.md",
@@ -21,14 +18,22 @@
     "law/",
     "skills/",
     "tools/",
-    "refer-install-state.json"
+    "scripts/",
+    "refer-install-state.json",
+    "token-watch/"
   ],
   "keywords": [
     "refer",
     "zo",
     "bootstrap",
     "skills",
-    "vipc"
+    "vipc",
+    "factory",
+    "scripts",
+    "token-tracker"
   ],
-  "license": "UNLICENSED"
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
 }

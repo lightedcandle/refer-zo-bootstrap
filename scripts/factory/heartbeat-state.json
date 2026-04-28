@@ -1,0 +1,68 @@
+{
+  "runs": 2,
+  "last_run": "2026-04-28T05:53:49.879Z",
+  "cars": {},
+  "dashboard": {
+    "last_heartbeat": "2026-04-28T05:53:49.882Z",
+    "process_count": 0,
+    "last_event": null,
+    "latest_status": "idle",
+    "task_count": 0,
+    "task_pending": 0,
+    "uptime": "600s",
+    "mode": "heartbeat"
+  },
+  "tasks": [],
+  "alerts": [],
+  "last_mode": "heartbeat",
+  "car_results": [
+    {
+      "car": "01-dashboard-state",
+      "status": "completed",
+      "duration_ms": 0,
+      "dashboard_updates": {
+        "last_heartbeat": "2026-04-28T05:53:49.881Z",
+        "process_count": 0,
+        "last_event": null,
+        "latest_status": "idle",
+        "task_count": 0,
+        "task_pending": 0,
+        "uptime": "600s",
+        "mode": "heartbeat"
+      },
+      "task_executed": null,
+      "gap_found": null,
+      "alert": null
+    },
+    {
+      "car": "02-task-executor",
+      "status": "idle",
+      "duration_ms": 0,
+      "dashboard_updates": {},
+      "task_executed": null,
+      "gap_found": null,
+      "alert": null
+    },
+    {
+      "car": "03-scan-gaps",
+      "status": "gaps-found",
+      "duration_ms": 0,
+      "dashboard_updates": {},
+      "task_executed": null,
+      "gap_found": {
+        "count": 1,
+        "items": [
+          {
+            "type": "missing",
+            "category": "context",
+            "name": "codebase-tree",
+            "severity": "medium",
+            "note": "run scan-workspace to generate"
+          }
+        ]
+      },
+      "alert": null
+    }
+  ],
+  "warnings": []
+}

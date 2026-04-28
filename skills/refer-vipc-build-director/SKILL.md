@@ -2,7 +2,6 @@
 name: refer-vipc-build-director
 description: A perpetual, autonomous build director automation that spawns single-use workers to execute specific contracts, managing the workflow timeline natively on the Zo computer.
 ---
-
 # VIPC Autopilot Build Director
 
 This is a universal blueprint for establishing an autonomous "Pendulum Scheduler" within any governed Virtual Intelligent Private Computer (VIPC).
