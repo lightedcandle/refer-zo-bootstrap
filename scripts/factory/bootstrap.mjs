@@ -453,6 +453,69 @@ async function main(argv) {
   console.log("\n--- Installing scripts ---");
   await installScripts(scriptsTarget);
 
+  // ── 7. Install factory system ──────────────────────────────
+  console.log("\n--- Installing Script Factory system ---");
+  const factoryDir = join(scriptsTarget, "factory");
+  ensureDir(factoryDir);
+  ensureDir(join(factoryDir, "artifacts"));
+  ensureDir(join(factoryDir, "lib"));
+
+  // Copy factory core files
+  const factoryFiles = [
+    ["intake-engine.mjs", join(factoryDir, "intake-engine.mjs")],
+    ["auto-capture.mjs", join(factoryDir, "auto-capture.mjs")],
+    ["factory.mjs", join(factoryDir, "factory.mjs")],
+    ["lib/ui.mjs", join(factoryDir, "lib/ui.mjs")],
+    ["lib/constants.js", join(factoryDir, "lib/constants.js")],
+  ];
+
+  for (const [src, dest] of factoryFiles) {
+    const srcPath = join(SCRIPTS_DIR, src);
+    if (existsSync(srcPath)) {
+      cpSync(srcPath, dest, { overwrite: true });
+      console.log(`  Installed: ${src}`);
+    }
+  }
+
+  // Copy preset scripts
+  const artifactsDir = join(factoryDir, "artifacts");
+  const presets = [
+    "button-add.mjs",
+    "page-add.mjs",
+    "form-add.mjs",
+    "scan-workspace.mjs",
+    "git-commit.mjs",
+    "deploy-pages.mjs",
+  ];
+  for (const preset of presets) {
+    const srcPath = join(ARTIFACTS_DIR, preset);
+    if (existsSync(srcPath)) {
+      cpSync(srcPath, join(artifactsDir, preset), { overwrite: true });
+      console.log(`  Preset: ${preset}`);
+    }
+  }
+
+  // Ensure registry exists
+  const registryPath = join(factoryDir, "script-registry.json");
+  if (!existsSync(registryPath)) {
+    const { generateRegistry } = await import(join(factoryDir, "auto-capture.mjs")).catch(() => ({ generateRegistry: null }));
+    writeFileSync(registryPath, JSON.stringify({
+      version: "1.0",
+      updatedAt: new Date().toISOString(),
+      scripts: [
+        { id: "page-add", trigger: ["add page", "new page", "create page"], description: "Add a new page", category: "page", questions: [{ id: "page-path", label: "Page path", type: "text", required: true }, { id: "page-type", label: "Type", type: "select", options: ["Public", "Private", "API"], required: true }], output: "Zo Space route" },
+        { id: "form-add", trigger: ["add form", "new form", "form"], description: "Add a form", category: "component", questions: [{ id: "form-type", label: "Form type", type: "select", options: ["Add", "Edit", "Search"], required: true }, { id: "fields", label: "Fields", type: "select", options: ["Minimal", "Standard", "Full"], required: true }], output: "Form component" },
+        { id: "button-add", trigger: ["add button", "button"], description: "Add a button", category: "element", questions: [{ id: "label", label: "Label", type: "text", required: true }, { id: "variant", label: "Variant", type: "select", options: ["Primary", "Secondary", "Ghost"], required: true }], output: "Button code" },
+        { id: "scan-workspace", trigger: ["scan", "workspace"], description: "Scan workspace", category: "tool", questions: [], output: "Tree file" },
+        { id: "git-commit", trigger: ["commit", "save"], description: "Git commit", category: "git", questions: [{ id: "message", label: "Commit message", type: "text", required: true }], output: "git commit" },
+        { id: "deploy-pages", trigger: ["deploy", "publish"], description: "Deploy to Cloudflare", category: "deploy", questions: [{ id: "target", label: "Target", type: "select", options: ["staging", "production"], required: true }], output: "wrangler deploy" },
+      ],
+    }, null, 2));
+    console.log("  Registry initialized.");
+  }
+
+  console.log("  Factory ready. Run: node scripts/factory/factory.mjs list");
+
   // ── 8. Create Zo dashboard page ──────────────────────────────────
   console.log("\n--- Creating Zo dashboard ---");
   const dashMeta = await ensureZoDashboard(scriptsTarget, WORKSPACE);

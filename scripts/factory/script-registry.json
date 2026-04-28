@@ -1,0 +1,146 @@
+/**
+ * script-registry.json
+ * 
+ * This is the single source of truth for all available scripts.
+ * Scripts register themselves here on execution.
+ * The intake engine reads this file to find matching scripts.
+ * 
+ * Auto-generated. Do not edit manually.
+ */
+
+{
+  "version": "1.0",
+  "updatedAt": "",
+  "scripts": [
+    {
+      "id": "form-add",
+      "trigger": ["add form", "new form", "create form", "form"],
+      "description": "Add a form with field configuration",
+      "category": "component",
+      "questions": [
+        { "id": "form-type", "label": "Form type", "type": "select", "options": ["Add", "Edit", "View", "Search"], "required": true },
+        { "id": "fields", "label": "Field coverage", "type": "select", "options": ["Minimal (2-3)", "Standard (5-7)", "Full (10+)"], "required": true },
+        { "id": "submit-style", "label": "Submit style", "type": "select", "options": ["Single", "Dual (Save + Cancel)"], "required": false }
+      ],
+      "output": "Zo Space route (page or API)"
+    },
+    {
+      "id": "button-add",
+      "trigger": ["add button", "new button", "button", "create button"],
+      "description": "Add a button component",
+      "category": "element",
+      "questions": [
+        { "id": "button-label", "label": "Button label", "type": "text", "required": true },
+        { "id": "button-variant", "label": "Style", "type": "select", "options": ["Primary", "Secondary", "Ghost"], "required": true },
+        { "id": "button-size", "label": "Size", "type": "select", "options": ["sm", "md", "lg"], "required": false }
+      ],
+      "output": "Button component code"
+    },
+    {
+      "id": "page-add",
+      "trigger": ["add page", "new page", "create page", "page"],
+      "description": "Add a new page to the app",
+      "category": "page",
+      "questions": [
+        { "id": "page-path", "label": "Page path (e.g. /admin/users)", "type": "text", "required": true },
+        { "id": "page-type", "label": "Page type", "type": "select", "options": ["Public", "Private", "API"], "required": true },
+        { "id": "has-sidebar", "label": "Include sidebar?", "type": "select", "options": ["Yes", "No"], "required": false }
+      ],
+      "output": "Zo Space route file"
+    },
+    {
+      "id": "field-add",
+      "trigger": ["add field", "new field", "field", "form field"],
+      "description": "Add a field to an existing form",
+      "category": "element",
+      "questions": [
+        { "id": "field-type", "label": "Field type", "type": "select", "options": ["Text", "Number", "Email", "Select", "Checkbox", "Date", "Textarea"], "required": true },
+        { "id": "field-label", "label": "Field label", "type": "text", "required": true },
+        { "id": "field-name", "label": "Field name (id)", "type": "text", "required": true },
+        { "id": "required", "label": "Required?", "type": "select", "options": ["Yes", "No"], "required": false }
+      ],
+      "output": "Field component code"
+    },
+    {
+      "id": "table-add",
+      "trigger": ["add table", "new table", "data table", "table view"],
+      "description": "Add a data table component",
+      "category": "component",
+      "questions": [
+        { "id": "data-source", "label": "Data source", "type": "text", "required": true },
+        { "id": "columns", "label": "Columns (comma-separated)", "type": "text", "required": true },
+        { "id": "has-search", "label": "Include search?", "type": "select", "options": ["Yes", "No"], "required": false },
+        { "id": "has-pagination", "label": "Include pagination?", "type": "select", "options": ["Yes", "No"], "required": false }
+      ],
+      "output": "Table component"
+    },
+    {
+      "id": "nav-add",
+      "trigger": ["add nav", "add link", "navigation", "menu item"],
+      "description": "Add navigation link",
+      "category": "navigation",
+      "questions": [
+        { "id": "nav-label", "label": "Link label", "type": "text", "required": true },
+        { "id": "nav-path", "label": "Link path", "type": "text", "required": true },
+        { "id": "nav-section", "label": "Nav section", "type": "select", "options": ["Sidebar", "Header", "Footer"], "required": true }
+      ],
+      "output": "Nav link component"
+    },
+    {
+      "id": "deploy-pages",
+      "trigger": ["deploy", "publish", "push live", "ship"],
+      "description": "Deploy to Cloudflare Pages",
+      "category": "deploy",
+      "questions": [
+        { "id": "target", "label": "Deploy target", "type": "select", "options": ["staging", "production"], "required": true },
+        { "id": "include-db", "label": "Run migrations first?", "type": "select", "options": ["Yes", "No"], "required": false }
+      ],
+      "output": "Wrangler deploy command"
+    },
+    {
+      "id": "git-commit",
+      "trigger": ["commit", "save changes", "checkpoint"],
+      "description": "Git commit with message",
+      "category": "git",
+      "questions": [
+        { "id": "commit-message", "label": "Commit message", "type": "text", "required": true },
+        { "id": "commit-type", "label": "Change type", "type": "select", "options": ["feat", "fix", "docs", "refactor", "chore"], "required": false }
+      ],
+      "output": "git commit command"
+    },
+    {
+      "id": "scan-workspace",
+      "trigger": ["scan", "workspace", "what do we have", "show me"],
+      "description": "Scan workspace and emit codebase tree",
+      "category": "tool",
+      "questions": [],
+      "output": "codebase tree file"
+    },
+    {
+      "id": "token-stats",
+      "trigger": ["tokens", "fuel", "usage", "cost"],
+      "description": "Show token usage stats",
+      "category": "tool",
+      "questions": [],
+      "output": "token dashboard data"
+    },
+    {
+      "id": "route-list",
+      "trigger": ["list routes", "show routes", "routes"],
+      "description": "List all Zo Space routes",
+      "category": "tool",
+      "questions": [],
+      "output": "routes list"
+    },
+    {
+      "id": "service-restart",
+      "trigger": ["restart", "reboot", "reload service"],
+      "description": "Restart a user service",
+      "category": "ops",
+      "questions": [
+        { "id": "service-name", "label": "Service name", "type": "text", "required": true }
+      ],
+      "output": "restart command"
+    }
+  ]
+}
