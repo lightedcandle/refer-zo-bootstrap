@@ -1,0 +1,34 @@
+{
+  "name": "refer-zo-bootstrap",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Portable REFER bootstrap package for Zo Files, personas, rules, skills, and REFER.OS law.",
+  "type": "module",
+  "bin": {
+    "refer-zo-bootstrap": "./tools/vipc-bootstrap.mjs",
+    "refer-zo-mcp": "./tools/zo-mcp.mjs"
+  },
+  "scripts": {
+    "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs",
+    "bootstrap": "node tools/vipc-bootstrap.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "AGENTS.md",
+    "docs/",
+    "law/",
+    "skills/",
+    "tools/",
+    "refer-install-state.json"
+  ],
+  "keywords": [
+    "refer",
+    "zo",
+    "bootstrap",
+    "skills",
+    "vipc"
+  ],
+  "license": "UNLICENSED"
+}
