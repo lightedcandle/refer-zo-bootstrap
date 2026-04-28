@@ -1,20 +1,19 @@
 /**
- * intake-engine.mjs
+ * INTAKE ENGINE v2 — Two-Mode with Satisfaction Block
  * 
- * The gatekeeper. Every user prompt flows through here first.
+ * DISCUSS MODE: No execution. Free-flowing conversation. Script bypass.
+ * BUILD MODE: Execution gate. Satisfaction block required before firing scripts.
  * 
- * Flow:
- * 1. Receive user prompt
- * 2. Match to script by triggers (no AI needed)
- * 3. Ask embedded questions
- * 4. Build contract from answers
- * 5. If script exists and handles it → execute
- * 6. If script can't handle it → AI_APPROVAL_GATE
- * 7. If AI approved → send minimal contract + question to AI
- * 8. AI solves
- * 9. AI auto-writes script (auto-capture)
- * 10. Register script
- * 11. Done
+ * Contract schema:
+ * {
+ *   intent: "DISCUSS" | "BUILD" | "VENT" | "QUESTION",
+ *   op: "NONE" | "ADD_ROUTE" | "ADD_FORM" | "DEPLOY" | ...,
+ *   target: string,
+ *   params: string[],
+ *   context: string,
+ *   satisfactionBlock: string | null,  // required before BUILD
+ *   tokens_saved: number               // tokens reduced by compression
+ * }
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
