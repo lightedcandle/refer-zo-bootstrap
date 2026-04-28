@@ -1,0 +1,219 @@
+{
+  "0": "{\"Forge\":{\"plain_english\":\"Conversion Unit\",\"meaning\":\"One bounded unit that turns defined inputs into defined outputs.\",\"rule\":\"Use Forge for a repeatable conversion unit. Do not use Factory when only one conversion unit is meant.\"},\"Factory\":{\"plain_english\":\"Governed Forge Domain\",\"meaning\":\"A governance domain that coordinates multiple forges or manages governance around them.\",\"rule\":\"Use Factory when the domain owns multiple forges; use Forge for one bounded conversion unit.\"},\"Factory System\":{\"plain_english\":\"Coordinated Factory Network\",\"meaning\":\"The complete network of factories across domains.\",\"rule\":\"Use for the whole body of coordinated factories.\"},\"Script Factory\":{\"plain_english\":\"Script Governance System\",\"meaning\":\"The workspace and governance layer that creates, manages, and runs script forges.\",\"rule\":\"Use for the whole script governance system.\"},\"Script Legend\":{\"plain_english\":\"Deterministic Terminology\",\"meaning\":\"Governed vocabulary and rules for script relationships and status.\",\"rule\":\"Script Legend is authoritative when terms conflict.\"},\"Script Map\":{\"plain_english\":\"Script Relationship Map\",\"meaning\":\"A map of how scripts connect, call each other, and move data.\",\"rule\":\"Use to answer what calls what, what feeds what.\"},\"Scriptionary\":{\"plain_english\":\"Script Dictionary\",\"meaning\":\"Definitions of script terms and vocabulary.\",\"rule\":\"Use to explain words; do not use as the relationship map.\"},\"Scriptographer\":{\"plain_english\":\"Script Cartographer\",\"meaning\":\"The scanner/builder that maintains script maps and definitions.\",\"rule\":\"Use for the tool or process that creates maps and definitions.\"},\"Scriptonomy\":{\"plain_english\":\"Script Taxonomy\",\"meaning\":\"The classification blueprint for script kinds, surfaces, points, and status rules.\",\"rule\":\"Use for allowed categories and validation rules.\"},\"Context Picker\":{\"plain_english\":\"Context Pack Builder\",\"meaning\":\"The script that selects relevant assets for a prompt-specific model package.\",\"rule\":\"Use to build compact context packs instead of sending the whole repo.\"},\"Train Car\":{\"plain_english\":\"Train Car\",\"meaning\":\"A script in train-cars/ that runs on every heartbeat tick. Receives state, returns updated state and a continue flag.\",\"rule\":\"Use for segmented, independently swappable tick units. Each car should do one focused task.\"},\"Heartbeat\":{\"plain_english\":\"Heartbeat Train\",\"meaning\":\"Periodic orchestrator that runs train cars on a fixed interval. Lives in heartbeat.mjs.\",\"rule\":\"Use as the steady tick engine. Cars must export run(state) or { run }. Heartbeat owns the tick loop, not the cars.\"},\"Chunk Session\":{\"plain_english\":\"Chunk Session\",\"meaning\":\"A group of contract rows sharing the same session_id, created when a prompt is auto-chunked into multiple pieces.\",\"rule\":\"Use session_id to correlate all chunks of one prompt. A session with 1 chunk means no chunking occurred.\"},\"Chat Contracts\":{\"plain_english\":\"Chat Contracts Ledger\",\"meaning\":\"DuckDB dataset that logs every intake contract, chunk session, and routing decision made by compress-prompt.mjs.\",\"rule\":\"Use for audit trail and routing analytics. Not for cross-referencing live execution state.\"},\"Chat Logs\":{\"plain_english\":\"Chat Logs Ledger\",\"meaning\":\"DuckDB dataset that logs every heartbeat tick and what each train car did.\",\"rule\":\"Use for heartbeat health monitoring and car performance tracking.\"},\"Hive Factory Dispatch\":{\"plain_english\":\"Dispatch Ledger\",\"meaning\":\"DuckDB dataset tracking factory-to-factory package dispatches and delivery status.\",\"rule\":\"Use for retry logic and confirming packages reached their destination.\"},\"Node Identity\":{\"plain_english\":\"Node Identity Registry\",\"meaning\":\"DuckDB dataset of all known hives — self and peers — with capabilities and status.\",\"rule\":\"Use for routing dispatches and detecting stale peers. Never store raw tokens.\"},\"Request Watchdog\":{\"plain_english\":\"Request Watchdog Tracker\",\"meaning\":\"DuckDB dataset tracking every outbound API request lifecycle — pending, in_flight, done, timeout, error.\",\"rule\":\"Use for retry management and timeout detection on chunk requests.\"},\"Script Registry\":{\"plain_english\":\"Script Registry Ledger\",\"meaning\":\"DuckDB dataset mirroring script-registry.json with run history and stats.\",\"rule\":\"Use for trigger matching, performance analytics, and detecting broken or unused scripts.\"},\"Dispatcher\":{\"plain_english\":\"Hive Dispatcher\",\"meaning\":\"Script that sends factory packages to target hives via their Zo API bootstrap endpoint.\",\"rule\":\"Use to distribute factory updates. Creates outbound dispatch row, updates status on acknowledgment.\"},\"Cell Bootstrap\":{\"plain_english\":\"Cell Bootstrap\",\"meaning\":\"Script that receives factory packages from a dispatcher and applies them to the local hive.\",\"rule\":\"Use on the receiving hive. Creates inbound dispatch row, applies package, updates status=applied.\"},\"Talkback\":{\"plain_english\":\"Factory Talkback\",\"meaning\":\"Periodic peer ping via Zo API that checks if a hive is alive, its version, and its capabilities.\",\"rule\":\"Use for peer discovery and network health. talkback.mjs is the script; /api/factory/talkback is the endpoint.\"},\"Chunker\":{\"plain_english\":\"Auto-Chunker\",\"meaning\":\"Script that detects oversized prompts and splits them into safe sub-prompts based on sentence count, word count, and risk signals.\",\"rule\":\"Use before sending risky requests to prevent timeouts. Triggered when sentences > 3 OR words > 150 OR risk = unknown.\"},\"Satisfier\":{\"plain_english\":\"Satisfier\",\"meaning\":\"A function that checks whether a BUILD-mode prompt has enough context to be executed — target, type, where, what, who, how.\",\"rule\":\"Use to gate BUILD mode. Returns false for unknown risk until all required fields are present.\"},\"Mode\":{\"plain_english\":\"Mode\",\"meaning\":\"The intake routing decision — DISCUSS (free AI chat), BUILD (full scope, satisfaction required), MICRO (single file, direct), PLAN (diversion to planner).\",\"rule\":\"Use to determine how much structure to apply before execution.\"}}",
+  "_updated": "2026-04-28T20:17:17.466Z",
+  "_note": "Auto-generated by script-dictionary.mjs",
+  "Forge": {
+    "auto-chunker": {
+      "plain_english": "Auto Chunker",
+      "meaning": "Auto-detects chunking needs and splits requests by complexity and token weight",
+      "rule": "Use auto-chunker when split chunk complex request.",
+      "triggers": [
+        "split chunk complex request"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "gate",
+      "file": "auto-chunker.mjs",
+      "status": "pending"
+    },
+    "cell-bootstrap": {
+      "plain_english": "Cell Bootstrap",
+      "meaning": "Multi-source bootstrap — tries github/hive/interlink/skill in priority order",
+      "rule": "Use cell-bootstrap when bootstrap install init.",
+      "triggers": [
+        "bootstrap install init"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "gate",
+      "file": "bootstrap.mjs",
+      "status": "pending"
+    },
+    "intake-engine": {
+      "plain_english": "Intake Engine",
+      "meaning": "Gatekeeper — routes prompts, approves AI involvement",
+      "rule": "Use intake-engine when add build discuss micro.",
+      "triggers": [
+        "add build discuss micro"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "gate",
+      "file": "compress-prompt.mjs",
+      "status": "pending"
+    },
+    "dataset-store": {
+      "plain_english": "Dataset Store",
+      "meaning": "Manages DuckDB datasets for chat-contracts, chat-logs, hive-events, node-registry, request-log, script-registry",
+      "rule": "Use dataset-store when store log query dataset.",
+      "triggers": [
+        "store log query dataset"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "dataset",
+      "file": "dataset-store.mjs",
+      "status": "pending"
+    },
+    "factory-cli": {
+      "plain_english": "Factory CLI",
+      "meaning": "CLI entry point — routes commands to appropriate forges",
+      "rule": "Use factory-cli when list scan run capture.",
+      "triggers": [
+        "list scan run capture"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "orchestrator",
+      "file": "factory.mjs",
+      "status": "pending"
+    },
+    "heartbeat": {
+      "plain_english": "Heartbeat Orchestrator",
+      "meaning": "Periodic tick orchestrator — runs train cars on each interval",
+      "rule": "Use heartbeat when tick interval periodic.",
+      "triggers": [
+        "tick interval periodic"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "trigger",
+      "file": "heartbeat.mjs",
+      "status": "pending"
+    },
+    "hive-api": {
+      "plain_english": "Hive API",
+      "meaning": "Hive distribution API — serves manifest, nodes, events",
+      "rule": "Use hive-api when hive api.",
+      "triggers": [
+        "hive api"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "bridge",
+      "file": "hive/api.mjs",
+      "status": "pending"
+    },
+    "hive-dispatcher": {
+      "plain_english": "Hive Dispatcher",
+      "meaning": "Pulls pending chunks from a cell and dispatches them for execution",
+      "rule": "Use hive-dispatcher when dispatch chunks.",
+      "triggers": [
+        "dispatch chunks"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "orchestrator",
+      "file": "hive/dispatcher.mjs",
+      "status": "pending"
+    },
+    "hive-receive": {
+      "plain_english": "Hive Receive",
+      "meaning": "Hive endpoint — handles cell registration, chunk dispatch, heartbeat, status queries",
+      "rule": "Use hive-receive when register dispatch heartbeat.",
+      "triggers": [
+        "register dispatch heartbeat"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "gate",
+      "file": "hive/receive.mjs",
+      "status": "pending"
+    },
+    "talkback": {
+      "plain_english": "Talkback",
+      "meaning": "Reports node status and pending chunk count back to the hive",
+      "rule": "Use talkback when talkback status.",
+      "triggers": [
+        "talkback status"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "sensor",
+      "file": "hive/talkback.mjs",
+      "status": "pending"
+    },
+    "scan-workspace": {
+      "plain_english": "Scan Workspace",
+      "meaning": "Scans workspace and builds codebase tree artifact",
+      "rule": "Use scan-workspace when scan workspace.",
+      "triggers": [
+        "scan workspace"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "artifact",
+      "file": "scan-workspace.mjs",
+      "status": "pending"
+    },
+    "heartbeat-car": {
+      "plain_english": "Heartbeat Car",
+      "meaning": "Train car — fires GET /api/hive?status=1 with cell identity on each tick",
+      "rule": "Use heartbeat-car when heartbeat tick.",
+      "triggers": [
+        "heartbeat tick"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "trigger",
+      "file": "train-cars/01-dashboard.mjs",
+      "status": "pending"
+    },
+    "spawn-worker-car": {
+      "plain_english": "Spawn Worker Car",
+      "meaning": "Train car — spawns a worker for each pending chunk on the dispatch queue",
+      "rule": "Use spawn-worker-car when spawn worker dispatch.",
+      "triggers": [
+        "spawn worker dispatch"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "orchestrator",
+      "file": "train-cars/02-spawn-worker.mjs",
+      "status": "pending"
+    },
+    "scan-workspace-car": {
+      "plain_english": "Scan Workspace Car",
+      "meaning": "Train car — re-runs scan-workspace if last scan is stale (>24h)",
+      "rule": "Use scan-workspace-car when scan gaps workspace.",
+      "triggers": [
+        "scan gaps workspace"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "artifact",
+      "file": "train-cars/03-scan-workspace.mjs",
+      "status": "pending"
+    },
+    "hive-sync-car": {
+      "plain_english": "Hive Sync Car",
+      "meaning": "Train car — pulls latest manifest from hive and updates local packages if newer",
+      "rule": "Use hive-sync-car when hive sync.",
+      "triggers": [
+        "hive sync"
+      ],
+      "opcodes": [],
+      "guards": [],
+      "type": "bridge",
+      "file": "train-cars/04-hive-sync.mjs",
+      "status": "pending"
+    }
+  },
+  "Scriptonomy": {
+    "DISCUSS": "Free-form AI chat — bypasses scripts, no gate",
+    "MICRO": "≤1 file mutation — fires directly, no gate",
+    "BUILD": "Full scope — requires satisfaction contract",
+    "PLAN": "Novel/complex — routed to plan first"
+  },
+  "BootstrapSources": {
+    "github": "git clone from canonical repo — default source",
+    "hive": "pull packages from registered Hive via /api/hive — Cell bootstrap",
+    "interlink": "Zo-to-Zo ask API — direct from director Zo — emergency/override",
+    "skill": "use refer-library-bootstrap skill — skill-based bootstrap"
+  },
+  "HiveCellArchitecture": {
+    "Hive": "Distribution hub — owns manifest, receives heartbeats, dispatches work",
+    "Cell": "A Zo registered to a Hive — fires heartbeats, receives dispatches",
+    "Terminal": "A standalone Zo not connected to any Hive"
+  }
+}

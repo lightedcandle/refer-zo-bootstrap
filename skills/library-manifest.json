@@ -46,5 +46,51 @@
       "remind_later",
       "skip_this_version"
     ]
-  }
+  },
+  "packages": [
+    {
+      "name": "refer-law",
+      "type": "skill-rule-stack",
+      "description": "Governance rules, skills, and law files that govern AI operation on Zo. Installs as Zo Skills.",
+      "install_path": "Skills/",
+      "contains": [
+        "skills/refer-os",
+        "skills/refer-zo-intake-router",
+        "skills/refer-governance",
+        "skills/refer-contract-tandem",
+        "skills/refer-library-bootstrap",
+        "skills/refer-vipc-operator-driver",
+        "skills/refer-vipc-design-driver",
+        "skills/refer-vipc-build-director",
+        "skills/zo-design-driver",
+        "skills/zo-free-tier-platform-limits"
+      ],
+      "installer": "tools/vipc-bootstrap.mjs",
+      "distribution": "github+zo-skills"
+    },
+    {
+      "name": "script-factory",
+      "type": "autonomous-living-skill",
+      "description": "Self-evolving Script Factory with heartbeat, gap scanning, and Hive inter-node communication. Ships with DISCUSS/BUILD/MICRO modes.",
+      "install_path": "refer-factory/",
+      "contains": [
+        "scripts/factory/factory.mjs",
+        "scripts/factory/heartbeat.mjs",
+        "scripts/factory/intake-engine.mjs",
+        "scripts/factory/decompress.mjs",
+        "scripts/factory/emit-contract.mjs",
+        "scripts/factory/scan-workspace.mjs",
+        "scripts/factory/register-artifact.mjs",
+        "scripts/factory/sync-skill.mjs",
+        "scripts/factory/bootstrap.mjs",
+        "scripts/factory/interlink.mjs",
+        "scripts/factory/cars/",
+        "scripts/factory/hive/talkback.mjs",
+        "scripts/factory/hive/nodes.json",
+        "scripts/factory/hive/self.json"
+      ],
+      "installer": "scripts/factory/bootstrap.mjs",
+      "distribution": "github-only"
+    }
+  ]
 }

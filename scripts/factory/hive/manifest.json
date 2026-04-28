@@ -1,0 +1,60 @@
+{
+  "version": "0.3.0",
+  "updated_at": "2026-04-28",
+  "packages": {
+    "refer-law": {
+      "version": "0.2.0",
+      "skills": [
+        "refer-os",
+        "refer-zo-intake-router",
+        "refer-governance",
+        "refer-contract-tandem",
+        "refer-library-bootstrap",
+        "refer-vipc-build-director",
+        "refer-vipc-operator-driver",
+        "refer-vipc-design-driver"
+      ],
+      "scripts": [
+        "tools/vipc-bootstrap.mjs",
+        "tools/zo-mcp.mjs"
+      ],
+      "law_files": [
+        "law/REFER.OS/"
+      ],
+      "description": "Core REFER governance laws — the immutable rule layer",
+      "distribution": "skills"
+    },
+    "script-factory": {
+      "version": "0.2.0",
+      "skills": [
+        "refer-factory"
+      ],
+      "scripts": [
+        "scripts/factory/heartbeat.mjs",
+        "scripts/factory/heartbeat-meta.json",
+        "scripts/factory/heartbeat-state.json",
+        "scripts/factory/factory.mjs",
+        "scripts/factory/compress-prompt.mjs",
+        "scripts/factory/decompress.mjs",
+        "scripts/factory/emit-contract.mjs",
+        "scripts/factory/scan-workspace.mjs",
+        "scripts/factory/bootstrap.mjs",
+        "scripts/factory/scriptionary.json",
+        "scripts/factory/script-registry.json",
+        "scripts/factory/cars/01-dashboard-state.mjs",
+        "scripts/factory/cars/02-task-executor.mjs",
+        "scripts/factory/cars/03-scan-gaps.mjs",
+        "scripts/factory/cars/04-hive-sync.mjs",
+        "scripts/factory/hive/talkback.mjs",
+        "scripts/factory/hive/nodes.json",
+        "scripts/factory/hive/self.json",
+        "scripts/factory/hive/manifest.json",
+        "scripts/factory/hive/api.mjs",
+        "scripts/factory/interlink.mjs"
+      ],
+      "description": "Evolving Script Factory being — grows through chat, self-scans, self-improves",
+      "distribution": "github-only"
+    }
+  },
+  "release_notes": "v0.3.0 — Added HDP-1 hive distribution protocol, 04-hive-sync car, hive/api.mjs endpoint"
+}
