@@ -1,0 +1,16 @@
+{
+  "name": "talkback-queue",
+  "version": "1.0.0",
+  "description": "Outbound message queue for Hive when it is unreachable. Messages are stored in DuckDB and flushed when Hive comes back online.",
+  "schema": {
+    "talkback_queue": {
+      "columns": [
+        { "name": "id",          "type": "INTEGER", "primary": true },
+        { "name": "queued_at",   "type": "TEXT",     "note": "ISO8601 timestamp" },
+        { "name": "msg",         "type": "TEXT",     "note": "JSON payload for Hive" },
+        { "name": "retries",     "type": "INTEGER",  "default": 0 },
+        { "name": "last_error",   "type": "TEXT" }
+      ]
+    }
+  }
+}

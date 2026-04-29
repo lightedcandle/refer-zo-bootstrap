@@ -192,24 +192,15 @@ let TARGET = "unknown";
 
 async function phaseHiveConnect(sessionId) {
   log("  Testing Hive connectivity...");
-  try {
-    const proc = spawn("curl", ["-s", "-X", "POST", "https://api.zo.computer/mcp",
-      "-H", "Content-Type: application/json",
-      "-H", `Authorization: Bearer ${process.env.ZO_COMPUTER_TELECHURCH || ""}`,
-      "-d", '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_space_routes","arguments":{}}}'
-    ]);
-    const out = await new Promise(res => {
-      let d = "";
-      proc.stdout.on("data", chunk => d += chunk);
-      proc.on("close", () => res(d));
-    });
-    if (out.includes("parse_error") || out.includes("Invalid")) {
-      await logEvolution(sessionId, "hive_connect", "HIVE_UNREACHABLE", "WARNING", "Hive API not reachable — will queue talkbacks");
-    } else {
-      log("  ✓ Hive API reachable");
-    }
-  } catch (e) {
-    await logEvolution(sessionId, "hive_connect", "HIVE_UNREACHABLE", "WARNING", `Hive unreachable: ${e.message}`);
+  const hive = await import("./hive/hive-talkback.mjs");
+  const reachable = await hive.hivePing();
+  if (reachable) {
+    log("  ✓ Hive reachable — attempting queued talkbacks...");
+    const { drained, failed } = await hive.drainQueue();
+    log(`  Queue drained: ${drained} | Failed: ${failed}`);
+  } else {
+    log("  ✗ Hive unreachable — talkbacks will queue for later");
+    await logEvolution(sessionId, "hive_connect", "HIVE_UNREACHABLE", "WARNING", "Hive API not reachable — will queue talkbacks");
   }
 }
 
