@@ -1,0 +1,30 @@
+{
+  "name": "node-identity",
+  "id": "node-identity",
+  "version": "1.0.0",
+  "description": "Registry of all known hives — self and peers. Updated by talkback.mjs on each ping. Used by dispatcher.mjs to route packages to the correct hive.",
+  "keywords": ["hive", "nodes", "peers", "identity", "registry"],
+  "resources": [
+    { "path": "data.duckdb", "name": "nodes", "format": "duckdb", "schema": "nodes" }
+  ],
+  "schemas": {
+    "nodes": {
+      "fields": [
+        { "name": "node_id",       "type": "string",  "description": "Unique hive identifier, lowercase alphanumeric" },
+        { "name": "endpoint",      "type": "string",  "description": "Base URL of the hive's Zo Space (e.g. https://telechurch.zo.space)" },
+        { "name": "api_token_env", "type": "string",  "description": "Name of the env var holding this node's Zo API token (e.g. ZO_COMPUTER_TELECHURCH)" },
+        { "name": "refer_version", "type": "string",  "description": "Currently installed refer-zo-bootstrap version" },
+        { "name": "capabilities",  "type": "string",  "description": "Comma-separated capability list: talkback,dispatch,request-watchdog" },
+        { "name": "secret_name",   "type": "string",  "description": "Zo Secret name for factory talkback (e.g. FACTORY_TALKBACK_SECRET) — the VALUE is never stored" },
+        { "name": "status",        "type": "string",  "description": "alive | stale | unknown" },
+        { "name": "last_seen_at",  "type": "string",  "description": "ISO 8601 of last successful talkback ping" },
+        { "name": "added_at",      "type": "string",  "description": "ISO 8601 when this node was first registered" }
+      ]
+    }
+  },
+  "metadata": {
+    "created_at": "2026-04-28",
+    "maintained_by": "talkback.mjs | cell-bootstrap.mjs",
+    "read_by": ["dispatcher.mjs", "hive/api.mjs"]
+  }
+}

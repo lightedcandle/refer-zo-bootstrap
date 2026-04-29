@@ -1,0 +1,32 @@
+{
+  "name": "hive-factory-dispatch",
+  "id": "hive-factory-dispatch",
+  "version": "1.0.0",
+  "description": "Tracks factory-to-factory package dispatches — what was sent, when, delivery status, and acknowledgment. Used by dispatcher.mjs and cell-bootstrap.mjs.",
+  "keywords": ["dispatch", "hive", "factory", "distribution"],
+  "resources": [
+    { "path": "data.duckdb", "name": "dispatches", "format": "duckdb", "schema": "dispatches" }
+  ],
+  "schemas": {
+    "dispatches": {
+      "fields": [
+        { "name": "id",               "type": "string",  "description": "Dispatch UUID" },
+        { "name": "direction",         "type": "string",  "description": "outbound | inbound" },
+        { "name": "from_node",        "type": "string",  "description": "Sending hive node_id" },
+        { "name": "to_node",          "type": "string",  "description": "Receiving hive node_id" },
+        { "name": "package_version",   "type": "string",  "description": "refer-zo-bootstrap version in this dispatch" },
+        { "name": "manifest_hash",    "type": "string",  "description": "SHA256 hash of manifest at dispatch time" },
+        { "name": "status",           "type": "string",  "description": "pending | sent | delivered | applied | failed | stale" },
+        { "name": "error_message",    "type": "string",  "description": "Error detail if status=failed" },
+        { "name": "sent_at",           "type": "string",  "description": "ISO 8601 when dispatch was sent" },
+        { "name": "delivered_at",      "type": "string",  "description": "ISO 8601 when peer acknowledged receipt" },
+        { "name": "applied_at",        "type": "string",  "description": "ISO 8601 when package was applied to local hive" }
+      ]
+    }
+  },
+  "metadata": {
+    "created_at": "2026-04-28",
+    "maintained_by": "dispatcher.mjs | cell-bootstrap.mjs",
+    "read_by": ["talkback.mjs", "hive/api.mjs"]
+  }
+}

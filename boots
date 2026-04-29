@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "profile": "<PROFILE>",
+  "identity": {
+    "nodeId": "<NODE_ID>",
+    "nodeName": "<NODE_NAME>",
+    "profile": "<PROFILE>",
+    "zooUrl": "<ZOO_URL>"
+  },
+  "bootstrap": {
+    "source": "github",
+    "priority": ["github", "hive", "interlink", "skill"]
+  },
+  "sources": {
+    "github": {
+      "enabled": true,
+      "repoUrl": "https://github.com/<OWNER>/refer-zo-bootstrap.git",
+      "branch": "main",
+      "localPath": "./packages/refer-zo-bootstrap"
+    },
+    "hive": {
+      "enabled": true,
+      "hiveUrl": "<HIVE_ZO_URL>",
+      "hiveApi": "<HIVE_ZO_URL>/api/hive",
+      "hiveSecret": "env:HIVE_SECRET",
+      "registerPath": "/api/hive",
+      "heartbeatPath": "/api/hive",
+      "heartbeatIntervalMs": 300000
+    },
+    "interlink": {
+      "enabled": false,
+      "directorZoUrl": "<DIRECTOR_ZO_URL>",
+      "directorToken": "env:ZO_CLIENT_IDENTITY_TOKEN",
+      "useCase": "emergency"
+    },
+    "skill": {
+      "enabled": true,
+      "bootstrapSkill": "refer-library-bootstrap",
+      "fallbackSource": "github"
+    }
+  },
+  "activation": {
+    "initDatasets": true,
+    "installSkills": true,
+    "registerWithHive": true,
+    "startHeartbeat": true,
+    "runHealthCheck": true
+  },
+  "_comment": "source priority determines which method is tried first when bootstrap is triggered"
+}

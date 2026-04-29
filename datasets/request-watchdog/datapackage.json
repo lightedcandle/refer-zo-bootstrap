@@ -1,0 +1,33 @@
+{
+  "name": "request-watchdog",
+  "id": "request-watchdog",
+  "version": "1.0.0",
+  "description": "Tracks every outbound API request lifecycle — pending, in_flight, done, timeout, error. Used by auto-chunker.mjs for retry management and timeout detection on chunk requests.",
+  "keywords": ["request", "watchdog", "timeout", "chunk", "retry"],
+  "resources": [
+    { "path": "data.duckdb", "name": "requests", "format": "duckdb", "schema": "requests" }
+  ],
+  "schemas": {
+    "requests": {
+      "fields": [
+        { "name": "id",               "type": "string",  "description": "Request UUID" },
+        { "name": "chunk_id",        "type": "string",  "description": "Reference to chunk in chat-contracts.chunks" },
+        { "name": "session_id",     "type": "string",  "description": "Parent chunk session ID" },
+        { "name": "endpoint",        "type": "string",  "description": "Full URL of the API endpoint called" },
+        { "name": "method",          "type": "string",  "description": "HTTP method: GET | POST" },
+        { "name": "status",          "type": "string",  "description": "pending | in_flight | done | timeout | error" },
+        { "name": "http_status",     "type": "integer", "description": "HTTP response status code, NULL if not yet received" },
+        { "name": "response_body",   "type": "string",  "description": "Truncated response body, max 500 chars" },
+        { "name": "attempts",        "type": "integer", "description": "Number of attempts made (starts at 1)" },
+        { "name": "max_attempts",     "type": "integer", "description": "Maximum retries before giving up" },
+        { "name": "created_at",       "type": "string",  "description": "ISO 8601 when request was created" },
+        { "name": "completed_at",     "type": "string",  "description": "ISO 8601 when request completed (success or failure)" }
+      ]
+    }
+  },
+  "metadata": {
+    "created_at": "2026-04-28",
+    "maintained_by": "auto-chunker.mjs",
+    "read_by": ["talkback.mjs", "dispatcher.mjs"]
+  }
+}
