@@ -1,4 +1,166 @@
-[
-  "{\n  \"version\": \"1.0.0\",\n  \"updated\": \"2026-04-28T04:12:00Z\",\n  \"forges\": [\n    {\n      \"id\": \"compress-prompt\",\n      \"name\": \"Compress Prompt\",\n      \"type\": \"gate\",\n      \"description\": \"Gatekeeper \\u2014 routes prompts, approves AI involvement\",\n      \"trigger_intents\": [\n        \"add\",\n        \"build\",\n        \"create\",\n        \"show\",\n        \"deploy\",\n        \"scan\",\n        \"run\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"questions\": []\n    },\n    {\n      \"id\": \"forge-auto-capture\",\n      \"name\": \"Forge Auto-Capture\",\n      \"type\": \"forge\",\n      \"description\": \"Watches for missing scripts, seeds new ones from AI solutions\",\n      \"trigger_intents\": [],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": true,\n      \"self_repair_checklist\": [\n        \"What did we need that did not exist yet?\",\n        \"What was ambiguous?\",\n        \"What had to be manually inferred?\",\n        \"What should become a script, context asset, test, status, or doctrine rule?\"\n      ]\n    },\n    {\n      \"id\": \"button-add\",\n      \"name\": \"Button Add\",\n      \"type\": \"forge\",\n      \"description\": \"Add button to a page route with anchored placement\",\n      \"trigger_intents\": [\n        \"add button\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/button-add.mjs\",\n      \"script_dna\": {\n        \"opcodes\": [\n          \"READ_CONTRACT\",\n          \"RESOLVE_TARGET\",\n          \"CHECK_GUARD\",\n          \"WRITE_FILE\"\n        ],\n        \"input_ports\": [\n          \"anchor_id\",\n          \"label\",\n          \"variant\"\n        ],\n        \"output_ports\": [\n          \"file\",\n          \"element_id\"\n        ],\n        \"guards\": [\n          \"anchor_must_exist\",\n          \"route_must_exist\"\n        ]\n      }\n    },\n    {\n      \"id\": \"page-add\",\n      \"name\": \"Page Add\",\n      \"type\": \"forge\",\n      \"description\": \"Create full page route with standard anchors (hero, content, footer)\",\n      \"trigger_intents\": [\n        \"add page\",\n        \"create page\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/page-add.mjs\",\n      \"anchors\": [\n        \"hero\",\n        \"content\",\n        \"footer\"\n      ]\n    },\n    {\n      \"id\": \"form-add\",\n      \"name\": \"Form Add\",\n      \"type\": \"forge\",\n      \"description\": \"Create form on a page with field definitions\",\n      \"trigger_intents\": [\n        \"add form\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/form-add.mjs\"\n    },\n    {\n      \"id\": \"git-commit\",\n      \"name\": \"Git Commit\",\n      \"type\": \"forge\",\n      \"description\": \"Stage all \\u2192 commit with message \\u2192 push to remote\",\n      \"trigger_intents\": [\n        \"commit\",\n        \"push\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/git-commit.mjs\"\n    },\n    {\n      \"id\": \"deploy-pages\",\n      \"name\": \"Deploy Pages\",\n      \"type\": \"forge\",\n      \"description\": \"Git add \\u2192 commit \\u2192 push \\u2192 Cloudflare Wrangler deploy\",\n      \"trigger_intents\": [\n        \"deploy\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/deploy-pages.mjs\"\n    },\n    {\n      \"id\": \"scan-workspace\",\n      \"name\": \"Scan Workspace\",\n      \"type\": \"forge\",\n      \"description\": \"Index workspace files \\u2192 emit codebase-tree.json\",\n      \"trigger_intents\": [\n        \"scan\",\n        \"index\"\n      ],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"script_file\": \"artifacts/scan-workspace.mjs\"\n    },\n    {\n      \"id\": \"auto-chunker\",\n      \"name\": \"Auto-Chunker\",\n      \"type\": \"forge\",\n      \"description\": \"Detects risky operations and auto-splits into bounded chunks\",\n      \"trigger_intents\": [],\n      \"status\": \"active\",\n      \"version\": \"1.0.0\",\n      \"last_run\": null,\n      \"run_count\": 0,\n      \"requires_ai\": false,\n      \"self_repair_checklist\": [\n        \"What risky patterns are not yet detected?\",\n        \"What bounded patterns are incorrectly flagged as risky?\",\n        \"Does chunk sizing stay within timeout budget?\"\n      ]\n    }\n  ]\n}",
-  "kind='file_ref' path='/home/workspace/refer-zo-bootstrap/scripts/factory/script-registry.json' media_type=None label=None"
-]
+{
+  "version": "1.1.0",
+  "updated": "2026-04-30T01:30:00Z",
+  "forges": [
+    {
+      "id": "compress-prompt",
+      "name": "Compress Prompt",
+      "type": "gate",
+      "description": "Gatekeeper that routes prompts and approves AI involvement.",
+      "trigger_intents": ["add", "build", "create", "show", "deploy", "scan", "run"],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "questions": []
+    },
+    {
+      "id": "page-add",
+      "name": "Page Add",
+      "type": "forge",
+      "description": "Create a page artifact with standard IMSCE page/index and page-modal structure.",
+      "trigger_intents": ["add page", "create page", "new page", "add route", "create route"],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/page-add.mjs",
+      "anchors": ["hero", "content", "footer"]
+    },
+    {
+      "id": "section-add",
+      "name": "Section Add",
+      "type": "forge",
+      "description": "Create a section artifact that sits inside a page modal and accepts cards.",
+      "trigger_intents": ["add section", "create section", "new section", "add hero", "add footer"],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/section-add.mjs"
+    },
+    {
+      "id": "card-add",
+      "name": "Card Add",
+      "type": "forge",
+      "description": "Create a card artifact with slots for title, body, and actions.",
+      "trigger_intents": ["add card", "create card", "new card", "add widget", "dashboard widget"],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/card-add.mjs"
+    },
+    {
+      "id": "button-add",
+      "name": "Button Add",
+      "type": "forge",
+      "description": "Create a button element artifact with anchored placement.",
+      "trigger_intents": ["add button", "create button", "new button", "button"],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/button-add.mjs",
+      "script_dna": {
+        "opcodes": ["READ_CONTRACT", "RESOLVE_TARGET", "CHECK_GUARD", "WRITE_ARTIFACT"],
+        "input_ports": ["anchor_id", "label", "variant"],
+        "output_ports": ["artifact", "element_id"],
+        "guards": ["element_requires_card_parent", "route_must_be_named"]
+      }
+    },
+    {
+      "id": "field-add",
+      "name": "Field Add",
+      "type": "forge",
+      "description": "Create a form field element artifact.",
+      "trigger_intents": ["add field", "create field", "new field", "input field", "form field"],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/field-add.mjs"
+    },
+    {
+      "id": "text-add",
+      "name": "Text Add",
+      "type": "forge",
+      "description": "Create a text, label, or heading element artifact.",
+      "trigger_intents": ["add text", "create text", "add label", "add heading", "new heading"],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/text-add.mjs"
+    },
+    {
+      "id": "form-add",
+      "name": "Form Add",
+      "type": "forge",
+      "description": "Create a form artifact with field definitions and a submit button.",
+      "trigger_intents": ["add form", "create form", "new form"],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/form-add.mjs"
+    },
+    {
+      "id": "scan-workspace",
+      "name": "Scan Workspace",
+      "type": "forge",
+      "description": "Index workspace files and emit a bounded scan artifact.",
+      "trigger_intents": ["scan", "index", "scan workspace", "index workspace"],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/scan-workspace.mjs"
+    },
+    {
+      "id": "forge-auto-capture",
+      "name": "Forge Auto-Capture",
+      "type": "forge",
+      "description": "Watches for missing scripts and seeds new ones from repeated gaps.",
+      "trigger_intents": [],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": true,
+      "self_repair_checklist": [
+        "What did we need that did not exist yet?",
+        "What was ambiguous?",
+        "What had to be manually inferred?",
+        "What should become a script, context asset, test, status, or doctrine rule?"
+      ]
+    },
+    {
+      "id": "auto-chunker",
+      "name": "Auto-Chunker",
+      "type": "forge",
+      "description": "Detects risky operations and auto-splits into bounded chunks.",
+      "trigger_intents": [],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/auto-chunker.mjs",
+      "self_repair_checklist": [
+        "What risky patterns are not yet detected?",
+        "What bounded patterns are incorrectly flagged as risky?",
+        "Does chunk sizing stay within timeout budget?"
+      ]
+    },
+    {
+      "id": "git-commit",
+      "name": "Git Commit",
+      "type": "forge",
+      "description": "Reserved source-control forge. Disabled for autonomous Zo execution.",
+      "trigger_intents": ["commit", "push"],
+      "status": "blocked",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/git-commit.mjs"
+    },
+    {
+      "id": "deploy-pages",
+      "name": "Deploy Pages",
+      "type": "forge",
+      "description": "Reserved deployment forge. Disabled for autonomous Zo execution.",
+      "trigger_intents": ["deploy"],
+      "status": "blocked",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/deploy-pages.mjs"
+    }
+  ]
+}

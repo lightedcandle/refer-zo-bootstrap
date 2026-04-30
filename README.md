@@ -43,11 +43,26 @@ If Zo reports a nonstandard Files root, pass it explicitly:
 node tools/vipc-bootstrap.mjs --profile refer --instance refer --remote-root /path/from/zo/pwd
 ```
 
+Verify an installed Zo computer without mutating it:
+
+```bash
+node tools/vipc-bootstrap.mjs --profile telechurch --instance telechurch --mode verify
+```
+
+Verification checks binder readback, required skills, `REFER.OS`, persona startup marker, REFER rule markers, and stale machine-local path assumptions.
+
 ## Layout
 
 - `skills/` - portable REFER skill library for Zo.
 - `tools/vipc-bootstrap.mjs` - governed installer for Zo Files, persona, rules, and skills.
 - `tools/zo-mcp.mjs` - low-level MCP helper for controlled Zo tool calls.
+- `scripts/factory/compression-codec.mjs` - lossless machine-packet compression/decompression for factory lanes.
+- `scripts/factory/bilateral-sim.mjs` - simulation path for direct chat vs typed-contract/compressed transport.
+- `scripts/factory/dispatch-contract.mjs` - low-token dispatch loop for contract ship, runner trigger, and talkback fetch.
+- `docs/factory-topology.md` - map of root factory, Zo bootstrap factory, and live Zo proving node.
+- `docs/parallel-factory-orchestration.md` - build director lane rules for cross-factory work.
+- `docs/machine-compression.md` - typed contract, compression, and talkback transport rules.
+- `docs/file-transport-tandem.md` - low-token Zo lane using file/API transport and minimal activation.
 - `law/REFER.OS/` - full REFER law mirror installed into Zo Files.
 - `docs/` - Zo capability notes and bootstrap doctrine.
 

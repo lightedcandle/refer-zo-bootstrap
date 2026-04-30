@@ -1,70 +1,67 @@
 # Script Registry
 
 **Dataset ID:** `script-registry`
-**Parent:** Script Factory — compress-prompt.mjs (intake) / factory.mjs (CLI)
-**Storage:** `DuckDB` + `data.duckdb` + `datapackage.json`
-
----
+**Parent:** Script Factory intake and local automation
+**Storage:** `script-registry.json`, `normalized-registry.json`, draft JSON records, optional DuckDB mirror
 
 ## Purpose
 
-Canonical ledger of every registered script in the Script Factory — including their triggers, opcodes, status, and run history.
+Canonical ledger of registered Script Factory forges, gates, utilities, and script gaps.
 
-This is the factory's script inventory. It answers: what scripts exist, which ones run most often, and which ones are broken or unused.
+This dataset answers:
 
----
+- which scripts exist;
+- which prompts should route to them;
+- which registry records point to missing executable files;
+- which new scripts have been requested but not implemented yet.
 
 ## Schema
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | VARCHAR | Unique script identifier (e.g., button-add, page-add) |
-| `name` | VARCHAR | Human-readable script name |
-| `type` | VARCHAR | forge / gate / utility |
-| `description` | VARCHAR | What the script does |
-| `trigger_intents` | VARCHAR | JSON array of trigger phrases |
-| `status` | VARCHAR | active / deprecated / broken |
-| `requires_ai` | BOOLEAN | Whether AI reasoning is needed |
-| `script_file` | VARCHAR | Path to the script file |
-| `opcodes` | VARCHAR | JSON array of opcodes (e.g., READ_CONTRACT, WRITE_FILE) |
-| `input_ports` | VARCHAR | JSON array of required inputs |
-| `output_ports` | VARCHAR | JSON array of outputs |
-| `guards` | VARCHAR | JSON array of guard conditions |
-| `self_repair_checklist` | VARCHAR | JSON array of repair prompts |
-| `run_count` | INT | Total times this script has been executed |
-| `last_run` | TIMESTAMP | ISO timestamp of last execution |
-| `success_rate` | FLOAT | Percentage of runs with outcome = ok |
-| `avg_duration_ms` | INT | Average execution time |
-| `questions` | VARCHAR | JSON array of outstanding questions (for gated scripts) |
-| `version` | VARCHAR | Script version |
-| `created_at` | TIMESTAMP | When the script was first registered |
+| `id` | string | Unique script identifier, e.g. `button-add` |
+| `name` | string | Human-readable script name |
+| `type` | string | `forge`, `gate`, `utility`, or `intake` |
+| `description` | string | What the script does |
+| `trigger_intents` | array | Prompt fragments used for local matching |
+| `status` | string | `active`, `draft`, `deprecated`, or `broken` |
+| `requires_ai` | boolean | Whether AI reasoning is required |
+| `script_file` | string | Repo-relative executable file |
+| `version` | string | Script version |
 
----
+## Active Files
 
-## Script Types
-
-| Type | Meaning |
+| Path | Purpose |
 |---|---|
-| `forge` | Executable conversion unit — transforms inputs into outputs |
-| `gate` | Decision point — classifies or routes, does not execute |
-| `utility` | Helper script — used by other scripts, not called directly by intake |
+| `scripts/factory/script-registry.json` | Historical source registry. |
+| `datasets/script-registry/normalized-registry.json` | Active normalized registry written by `local-script-registry.mjs`. |
+| `datasets/script-registry/drafts/*.json` | Script gaps created when intake cannot find a matching script. |
+| `scripts/factory/artifacts/*.mjs` | Executable script artifacts or generated placeholders. |
 
----
+## Scripts
 
-## Who Writes
+```powershell
+npm run factory:registry -- list --json
+npm run factory:registry -- match --prompt "add a page" --json
+npm run factory:registry -- scaffold --prompt "new repeated work" --json
+npm run factory:intake -- --prompt "ordinary user request" --json
+```
 
-- `factory.mjs` — registers new scripts and updates run stats
-- `compress-prompt.mjs` — reads `trigger_intents` to match prompts to scripts
+`factory.mjs` and the DuckDB mirror are legacy/aspirational until repaired. Active intake should go through `local-script-registry.mjs` and `local-intake-runner.mjs`.
 
-## Who Reads
+## Packaged Base Atomic Forges
 
-- `compress-prompt.mjs` — matches user prompts against trigger_intents
-- `factory.mjs list` — shows all registered scripts
-- `03-scan-workspace.mjs` — reads registry to detect missing or orphaned scripts
+The base package includes executable atomic forges that emit governed JSON artifacts under `datasets/script-artifacts/records/`:
 
-## Notes
+| Forge | Artifact |
+|---|---|
+| `page-add` | IMSCE page/index + page modal |
+| `section-add` | Section inside a page modal |
+| `card-add` | Card with slots |
+| `button-add` | Button element |
+| `field-add` | Field element |
+| `text-add` | Text/heading element |
+| `form-add` | Form card with fields and submit button |
+| `scan-workspace` | Bounded workspace scan |
 
-- `trigger_intents` are case-insensitive substrings — "add button" matches "add a button to page"
-- `status = deprecated` means script exists but should not be matched by intake
-- `questions` array non-empty means script is gated — intake should return hasQuestions
-- Use `script-registry.json` (the JSON file) as the source of truth; this dataset mirrors it
+These forges are executable and deterministic. They create build artifacts; app-specific adapters are responsible for applying those artifacts to React, Angular, Zo routes, or other target runtimes.

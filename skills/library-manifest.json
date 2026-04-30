@@ -18,14 +18,14 @@
   "entry_skill": "refer-os",
   "startup_binding_required": true,
   "startup_binding_version": 1,
-  "active_runtime_root": "Zo Files/Skills",
-  "portable_library_root": "E:/refer/zo-computer/skills",
+  "active_runtime_root": "/home/workspace/Skills",
+  "portable_library_root": "refer-zo-bootstrap/skills",
   "authority_roots": [
-    "E:/refer.os/REFER.OS",
-    "E:/refer.os/agent.md",
-    "Zo Files/agent.md",
-    "Zo Files/AGENTS.md",
-    "Zo Files/REFER.OS"
+    "/home/workspace/REFER.OS",
+    "/home/workspace/agent.md",
+    "/home/workspace/AGENTS.md",
+    "/home/workspace/Skills",
+    "/home/workspace/<PROFILE>"
   ],
   "universal_skills": [
     "refer-os",

@@ -1,0 +1,87 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777512342785",
+  "status": "done",
+  "prompt": "add primary button called Invite Member",
+  "created_at": "2026-04-30T01:25:42.785Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T01:25:42.588Z",
+    "mode": "unscoped",
+    "matched": [],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 13
+  },
+  "matched_script": {
+    "id": "button-add",
+    "name": "Button Add",
+    "type": "forge",
+    "description": "Create a button element artifact with anchored placement.",
+    "trigger_intents": [
+      "add button",
+      "create button",
+      "new button",
+      "button"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scripts/factory/artifacts/button-add.mjs",
+    "version": "1.1.0",
+    "raw": {
+      "id": "button-add",
+      "name": "Button Add",
+      "type": "forge",
+      "description": "Create a button element artifact with anchored placement.",
+      "trigger_intents": [
+        "add button",
+        "create button",
+        "new button",
+        "button"
+      ],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/button-add.mjs",
+      "script_dna": {
+        "opcodes": [
+          "READ_CONTRACT",
+          "RESOLVE_TARGET",
+          "CHECK_GUARD",
+          "WRITE_ARTIFACT"
+        ],
+        "input_ports": [
+          "anchor_id",
+          "label",
+          "variant"
+        ],
+        "output_ports": [
+          "artifact",
+          "element_id"
+        ],
+        "guards": [
+          "element_requires_card_parent",
+          "route_must_be_named"
+        ]
+      }
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\button-add.mjs",
+    "output": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\button-add-1777512342748-invite-member.json\",\n  \"artifact\": {\n    \"schema\": \"refer.zo.atomic-script-artifact.v1\",\n    \"id\": \"button-add.1777512342748.invite-member\",\n    \"created_at\": \"2026-04-30T01:25:42.749Z\",\n    \"script_id\": \"button-add\",\n    \"artifact_kind\": \"element.button\",\n    \"source_contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"script_id\": \"button-add\",\n      \"prompt\": \"add primary button called Invite Member\",\n      \"created_at\": \"2026-04-30T01:25:42.605Z\"\n    },\n    \"target\": {\n      \"route\": \"/\",\n      \"anchor_id\": \"E-invite-member-Button\"\n    },\n    \"imsce\": {\n      \"rule\": \"IMSCE order is I -> M -> S -> C -> E. Elements must sit inside cards.\",\n      \"layer\": \"E\",\n      \"element_type\": \"button\",\n      \"required_parent\": \"C\"\n    },\n    \"props\": {\n      \"label\": \"Invite Member\",\n      \"variant\": \"primary\",\n      \"action\": \"invite-member\",\n      \"role_class\": \"role-button\"\n    },\n    \"evidence\": [\n      \"atomic_forge:executed\",\n      \"production_mutation:not_performed\",\n      \"element_catalog:button\",\n      \"guard:element_requires_card_parent\"\n    ],\n    \"next\": \"Feed this artifact to a governed app adapter, then ratify source and route behavior.\"\n  }\n}\n"
+  },
+  "script_gap": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:no_match",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}

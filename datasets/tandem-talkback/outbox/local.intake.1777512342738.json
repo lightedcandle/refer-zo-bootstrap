@@ -1,0 +1,68 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777512342738",
+  "status": "done",
+  "prompt": "add required email field to member form",
+  "created_at": "2026-04-30T01:25:42.738Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T01:25:42.550Z",
+    "mode": "unscoped",
+    "matched": [],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 13
+  },
+  "matched_script": {
+    "id": "field-add",
+    "name": "Field Add",
+    "type": "forge",
+    "description": "Create a form field element artifact.",
+    "trigger_intents": [
+      "add field",
+      "create field",
+      "new field",
+      "input field",
+      "form field"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scripts/factory/artifacts/field-add.mjs",
+    "version": "1.0.0",
+    "raw": {
+      "id": "field-add",
+      "name": "Field Add",
+      "type": "forge",
+      "description": "Create a form field element artifact.",
+      "trigger_intents": [
+        "add field",
+        "create field",
+        "new field",
+        "input field",
+        "form field"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/field-add.mjs"
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\field-add.mjs",
+    "output": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\field-add-1777512342721-member-form.json\",\n  \"artifact\": {\n    \"schema\": \"refer.zo.atomic-script-artifact.v1\",\n    \"id\": \"field-add.1777512342721.member-form\",\n    \"created_at\": \"2026-04-30T01:25:42.721Z\",\n    \"script_id\": \"field-add\",\n    \"artifact_kind\": \"element.field\",\n    \"source_contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"script_id\": \"field-add\",\n      \"prompt\": \"add required email field to member form\",\n      \"created_at\": \"2026-04-30T01:25:42.555Z\"\n    },\n    \"target\": {\n      \"route\": \"/\",\n      \"anchor_id\": \"E-member-form-Field\"\n    },\n    \"imsce\": {\n      \"rule\": \"IMSCE order is I -> M -> S -> C -> E. Elements must sit inside cards.\",\n      \"layer\": \"E\",\n      \"element_type\": \"field\",\n      \"required_parent\": \"C\"\n    },\n    \"props\": {\n      \"name\": \"member_form\",\n      \"label\": \"Member Form\",\n      \"input_type\": \"email\",\n      \"role_class\": \"role-input\",\n      \"required\": true\n    },\n    \"evidence\": [\n      \"atomic_forge:executed\",\n      \"production_mutation:not_performed\",\n      \"element_catalog:field\",\n      \"guard:element_requires_card_parent\"\n    ],\n    \"next\": \"Feed this artifact to a governed app adapter, then ratify source and route behavior.\"\n  }\n}\n"
+  },
+  "script_gap": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:no_match",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}

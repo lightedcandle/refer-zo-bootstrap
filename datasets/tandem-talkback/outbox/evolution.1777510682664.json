@@ -1,0 +1,26 @@
+{
+  "schema": "refer.zo.evolution-talkback.v1",
+  "id": "evolution.1777510682664",
+  "status": "done",
+  "created_at": "2026-04-30T00:58:02.665Z",
+  "event_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\evolution-log\\records\\evolution.1777510682664.json",
+  "automation": {
+    "ok": true,
+    "status": "",
+    "processed_count": 0,
+    "error_count": 0
+  },
+  "registry": {
+    "ok": true,
+    "status": true,
+    "report_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\health\\registry-health-1777510682344.json"
+  },
+  "draft_count": 0,
+  "evidence": [
+    "evolution_loop:ran",
+    "local_intake_automation:ok",
+    "registry_doctor:ok",
+    "script_gap_drafts:none"
+  ],
+  "next": "continue_monitoring"
+}

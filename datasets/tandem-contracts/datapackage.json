@@ -1,0 +1,30 @@
+{
+  "name": "tandem-contracts",
+  "version": "0.1.0",
+  "description": "Machine-only Codex-to-Zo tandem contracts transported through Zo Files/MCP, isolated from live Zo user chat datasets.",
+  "resources": [
+    {
+      "name": "inbox",
+      "path": "inbox/",
+      "format": "json"
+    },
+    {
+      "name": "outbox",
+      "path": "outbox/",
+      "format": "json"
+    }
+  ],
+  "schema": {
+    "contract": {
+      "fields": [
+        { "name": "contract_id", "type": "string" },
+        { "name": "created_at", "type": "string" },
+        { "name": "owner_factory", "type": "string" },
+        { "name": "mode", "type": "string" },
+        { "name": "task", "type": "string" },
+        { "name": "transport_payload", "type": "string" },
+        { "name": "status", "type": "string" }
+      ]
+    }
+  }
+}

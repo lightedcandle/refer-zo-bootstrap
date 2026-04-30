@@ -1,0 +1,30 @@
+{
+  "name": "build-activity",
+  "version": "0.1.0",
+  "description": "Governed Zo build-intake and route-change activity records created from typed contracts.",
+  "resources": [
+    {
+      "name": "records",
+      "path": "records/",
+      "format": "json"
+    }
+  ],
+  "schema": {
+    "record": {
+      "fields": [
+        { "name": "contract_id", "type": "string" },
+        { "name": "change_id", "type": "string" },
+        { "name": "node", "type": "string" },
+        { "name": "target_instance", "type": "string" },
+        { "name": "created_at", "type": "string" },
+        { "name": "authority", "type": "string" },
+        { "name": "mode", "type": "string" },
+        { "name": "summary", "type": "string" },
+        { "name": "routes", "type": "array" },
+        { "name": "route_policy", "type": "string" },
+        { "name": "evidence_required", "type": "array" },
+        { "name": "next", "type": "string" }
+      ]
+    }
+  }
+}

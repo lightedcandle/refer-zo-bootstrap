@@ -9,8 +9,25 @@
     "refer-zo-mcp": "./tools/zo-mcp.mjs"
   },
   "scripts": {
-    "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs",
-    "bootstrap": "node tools/vipc-bootstrap.mjs"
+    "check": "node --check tools/vipc-bootstrap.mjs && node --check tools/zo-mcp.mjs && node --check scripts/factory/compression-codec.mjs && node --check scripts/factory/bilateral-sim.mjs && node --check scripts/factory/token-log-bridge.mjs && node --check scripts/factory/dataset-store.mjs && node --check scripts/factory/heartbeat.mjs && node --check scripts/factory/contract-inbox-runner.mjs && node --check scripts/factory/backfill-zo-local-usage.mjs && node --check scripts/factory/ship-contract-to-zo.mjs && node --check scripts/factory/fetch-zo-talkback.mjs && node --check scripts/factory/dispatch-contract.mjs && node --check scripts/factory/sync-tandem-runtime-to-zo.mjs && node --check scripts/factory/node-scope.mjs && node --check scripts/factory/local-script-registry.mjs && node --check scripts/factory/local-intake-runner.mjs && node --check scripts/factory/inbox-automation.mjs && node --check scripts/factory/registry-doctor.mjs && node --check scripts/factory/evolution-loop.mjs && node --check scripts/factory/artifacts/atomic-common.mjs && node --check scripts/factory/artifacts/page-add.mjs && node --check scripts/factory/artifacts/section-add.mjs && node --check scripts/factory/artifacts/card-add.mjs && node --check scripts/factory/artifacts/button-add.mjs && node --check scripts/factory/artifacts/field-add.mjs && node --check scripts/factory/artifacts/text-add.mjs && node --check scripts/factory/artifacts/form-add.mjs && node --check scripts/factory/artifacts/scan-workspace.mjs",
+    "bootstrap": "node tools/vipc-bootstrap.mjs",
+    "verify": "node tools/vipc-bootstrap.mjs --mode verify",
+    "simulate": "node scripts/factory/bilateral-sim.mjs",
+    "codec:self-test": "node scripts/factory/compression-codec.mjs self-test",
+    "contract:run-once": "node scripts/factory/contract-inbox-runner.mjs --once",
+    "tandem:ship": "node scripts/factory/ship-contract-to-zo.mjs",
+    "tandem:fetch": "node scripts/factory/fetch-zo-talkback.mjs",
+    "dispatch:contract": "node scripts/factory/dispatch-contract.mjs",
+    "tandem:sync-runtime": "node scripts/factory/sync-tandem-runtime-to-zo.mjs",
+    "tandem:backfill-usage": "node scripts/factory/backfill-zo-local-usage.mjs",
+    "scope:record": "node scripts/factory/node-scope.mjs record",
+    "scope:report": "node scripts/factory/node-scope.mjs report",
+    "factory:registry": "node scripts/factory/local-script-registry.mjs",
+    "factory:intake": "node scripts/factory/local-intake-runner.mjs",
+    "factory:automation-once": "node scripts/factory/inbox-automation.mjs --once",
+    "factory:automation-status": "node scripts/factory/inbox-automation.mjs --status",
+    "factory:registry-doctor": "node scripts/factory/registry-doctor.mjs",
+    "factory:evolve": "node scripts/factory/evolution-loop.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -19,6 +36,7 @@
     "AGENTS.md",
     "docs/",
     "law/",
+    "scripts/",
     "skills/",
     "tools/",
     "refer-install-state.json"

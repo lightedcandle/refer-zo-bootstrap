@@ -1,0 +1,27 @@
+{
+  "name": "script-artifacts",
+  "id": "script-artifacts",
+  "version": "1.0.0",
+  "description": "Durable JSON outputs from base atomic Script Factory forges.",
+  "resources": [
+    {
+      "name": "records",
+      "path": "records/*.json",
+      "format": "json",
+      "description": "Atomic script artifacts emitted by executable base forges."
+    }
+  ],
+  "schema": {
+    "fields": [
+      { "name": "schema", "type": "string" },
+      { "name": "id", "type": "string" },
+      { "name": "created_at", "type": "string" },
+      { "name": "script_id", "type": "string" },
+      { "name": "artifact_kind", "type": "string" },
+      { "name": "target", "type": "object" },
+      { "name": "imsce", "type": "object" },
+      { "name": "props", "type": "object" },
+      { "name": "evidence", "type": "array" }
+    ]
+  }
+}

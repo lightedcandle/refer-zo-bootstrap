@@ -6,7 +6,8 @@ import { performance } from "node:perf_hooks";
 
 const MCP_URL = "https://api.zo.computer/mcp";
 const PROTOCOL_VERSION = "2024-11-05";
-const LEDGER_PATH = "E:/refer/zo-computer/usage/zo-mcp-usage.jsonl";
+const LEDGER_PATH = "usage/zo-mcp-usage.jsonl";
+const DEFAULT_TIMEOUT_MS = 30000;
 
 function parseDotEnv(text) {
   const out = {};
@@ -51,6 +52,7 @@ function parseArgs(argv) {
     ledger: LEDGER_PATH,
     noLog: false,
     json: false,
+    timeoutMs: DEFAULT_TIMEOUT_MS,
   };
 
   const rest = [];
@@ -60,6 +62,7 @@ function parseArgs(argv) {
     else if (arg === "--args" && argv[i + 1]) args.argumentsJson = argv[++i];
     else if (arg === "--args64" && argv[i + 1]) args.argumentsBase64 = argv[++i];
     else if (arg === "--ledger" && argv[i + 1]) args.ledger = argv[++i];
+    else if (arg === "--timeout-ms" && argv[i + 1]) args.timeoutMs = Number(argv[++i]);
     else if (arg === "--no-log") args.noLog = true;
     else if (arg === "--json") args.json = true;
     else rest.push(arg);
@@ -67,14 +70,17 @@ function parseArgs(argv) {
 
   args.command = rest[0] || "";
   args.tool = rest[1] || "";
+  if (!Number.isFinite(args.timeoutMs) || args.timeoutMs <= 0) {
+    throw new Error("--timeout-ms must be a positive number");
+  }
   return args;
 }
 
 function printUsage() {
   console.error(`Usage:
-  node E:/refer/zo-computer/tools/zo-mcp.mjs list-tools [--instance refer|telechurch|jamaicaeats] [--json]
-  node E:/refer/zo-computer/tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args '{"key":"value"}' [--json]
-  node E:/refer/zo-computer/tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args64 <base64-json> [--json]
+  node tools/zo-mcp.mjs list-tools [--instance refer|telechurch|jamaicaeats] [--timeout-ms 30000] [--json]
+  node tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args '{"key":"value"}' [--timeout-ms 30000] [--json]
+  node tools/zo-mcp.mjs call <tool_name> --instance refer|telechurch|jamaicaeats --args64 <base64-json> [--timeout-ms 30000] [--json]
 
 Examples:
   node tools/zo-mcp.mjs call run_bash_command --args '{"cmd":"pwd"}' --json
@@ -110,11 +116,12 @@ async function logUsage(path, event) {
   await appendFile(path, `${JSON.stringify(event)}\n`, "utf8");
 }
 
-async function rpc(headers, method, params, id) {
+async function rpc(headers, method, params, id, timeoutMs) {
   const response = await fetch(MCP_URL, {
     method: "POST",
     headers,
     body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const text = await response.text();
   let json = null;
@@ -126,7 +133,7 @@ async function rpc(headers, method, params, id) {
   return { response, json, text };
 }
 
-async function initialize(token) {
+async function initialize(token, timeoutMs) {
   const baseHeaders = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
@@ -143,6 +150,7 @@ async function initialize(token) {
       clientInfo: { name: "refer-zo-mcp-helper", version: "0.1.0" },
     },
     1,
+    timeoutMs,
   );
 
   const sessionId =
@@ -166,6 +174,7 @@ async function initialize(token) {
         method: "notifications/initialized",
         params: {},
       }),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     // Some clients ignore notification failures; tool calls still determine success.
@@ -215,13 +224,13 @@ async function main() {
   let error = "";
 
   try {
-    const { headers } = await initialize(token);
+    const { headers } = await initialize(token, args.timeoutMs);
     const method = args.command === "list-tools" ? "tools/list" : "tools/call";
     const params =
       args.command === "list-tools"
         ? {}
         : { name: args.tool, arguments: toolArgs };
-    const call = await rpc(headers, method, params, 2);
+    const call = await rpc(headers, method, params, 2, args.timeoutMs);
     status = call.response.status;
     ok = call.response.ok && !call.json?.error && !call.json?.result?.isError;
     output = call.json;

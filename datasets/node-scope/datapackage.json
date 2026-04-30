@@ -1,0 +1,29 @@
+{
+  "name": "node-scope",
+  "version": "0.1.0",
+  "description": "Self-declared and locally inferred scopes for a Zo computer that may serve one or many purposes.",
+  "resources": [
+    {
+      "name": "records",
+      "path": "records/",
+      "format": "json"
+    }
+  ],
+  "schema": {
+    "record": {
+      "fields": [
+        { "name": "scope_id", "type": "string" },
+        { "name": "label", "type": "string" },
+        { "name": "source", "type": "string" },
+        { "name": "status", "type": "string" },
+        { "name": "confidence", "type": "number" },
+        { "name": "created_at", "type": "string" },
+        { "name": "updated_at", "type": "string" },
+        { "name": "purpose", "type": "string" },
+        { "name": "categories", "type": "array" },
+        { "name": "evidence", "type": "array" },
+        { "name": "routing_notes", "type": "array" }
+      ]
+    }
+  }
+}

@@ -31,8 +31,6 @@
       ],
       "scripts": [
         "scripts/factory/heartbeat.mjs",
-        "scripts/factory/heartbeat-meta.json",
-        "scripts/factory/heartbeat-state.json",
         "scripts/factory/factory.mjs",
         "scripts/factory/compress-prompt.mjs",
         "scripts/factory/decompress.mjs",

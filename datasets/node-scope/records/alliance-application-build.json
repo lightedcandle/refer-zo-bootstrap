@@ -1,0 +1,32 @@
+{
+  "schema": "refer.zo.node-scope.v1",
+  "scope_id": "alliance-application-build",
+  "label": "Alliance application build",
+  "source": "ratified_contract",
+  "status": "active",
+  "confidence": 0.8,
+  "created_at": "2026-04-29T23:01:16.127Z",
+  "updated_at": "2026-04-29T23:01:16.127Z",
+  "purpose": "Build and maintain Alliance Hub from local user purpose, typed intake, build activity, and route ratification evidence.",
+  "categories": [
+    "alliance-hub",
+    "zo-space-routes",
+    "governed-build-intake"
+  ],
+  "evidence": [
+    {
+      "ts": "2026-04-29T23:01:16.127Z",
+      "value": "hive.task.alliance.intake-automation.20260429 ratified"
+    },
+    {
+      "ts": "2026-04-29T23:01:16.127Z",
+      "value": "hive.task.alliance.app-shell-completion.20260429 ratified"
+    }
+  ],
+  "routing_notes": [
+    {
+      "ts": "2026-04-29T23:01:16.127Z",
+      "value": "Route Alliance Hub build work here when local user intent or node records match this scope."
+    }
+  ]
+}

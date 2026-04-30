@@ -1,0 +1,41 @@
+{
+  "name": "local-intake",
+  "id": "local-intake",
+  "version": "1.0.0",
+  "description": "File-backed queue and records for ordinary prompts converted into governed Script Factory intake.",
+  "resources": [
+    {
+      "name": "inbox",
+      "path": "inbox/*.json",
+      "format": "json",
+      "description": "Queued user requests waiting for inbox automation."
+    },
+    {
+      "name": "records",
+      "path": "records/*.json",
+      "format": "json",
+      "description": "Durable intake records written by local-intake-runner.mjs."
+    },
+    {
+      "name": "processed",
+      "path": "processed/*.json",
+      "format": "json",
+      "description": "Queue records already handled by automation."
+    },
+    {
+      "name": "errors",
+      "path": "errors/*.json",
+      "format": "json",
+      "description": "Queue records that failed automation."
+    }
+  ],
+  "schema": {
+    "fields": [
+      { "name": "schema", "type": "string" },
+      { "name": "id", "type": "string" },
+      { "name": "created_at", "type": "string" },
+      { "name": "prompt", "type": "string" },
+      { "name": "node_scope", "type": "object" }
+    ]
+  }
+}

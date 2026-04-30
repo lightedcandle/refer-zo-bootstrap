@@ -1,0 +1,25 @@
+{
+  "name": "tandem-dispatch",
+  "version": "0.1.0",
+  "description": "Lifecycle records for Codex-to-Zo tandem dispatch loops.",
+  "resources": [
+    {
+      "name": "reports",
+      "path": "reports/",
+      "format": "json"
+    }
+  ],
+  "schema": {
+    "dispatch": {
+      "fields": [
+        { "name": "contract_id", "type": "string" },
+        { "name": "started_at", "type": "string" },
+        { "name": "completed_at", "type": "string" },
+        { "name": "instance", "type": "string" },
+        { "name": "mode", "type": "string" },
+        { "name": "status", "type": "string" },
+        { "name": "report_path", "type": "string" }
+      ]
+    }
+  }
+}

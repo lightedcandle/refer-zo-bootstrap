@@ -1,0 +1,54 @@
+{
+  "schema": "refer.talkback.result.v1",
+  "contract_id": "hive.task.alliance.app-shell-completion.20260429",
+  "status": "done",
+  "changed": [],
+  "evidence": [
+    "read_contract:datasets/tandem-contracts/outbox/hive.task.alliance.app-shell-completion.20260429.json",
+    "decoded_transport:zo_task",
+    "runner:contract-inbox-runner",
+    "executor:none",
+    "node_scope:no_match",
+    "build_intake:recorded",
+    "route_change:typed_intake_required"
+  ],
+  "blockers": [],
+  "execution": {
+    "schema": "refer.zo.bounded-execution.v1",
+    "executor": "none",
+    "mode": "none",
+    "operations": [],
+    "blockers": []
+  },
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-29T23:18:01.239Z",
+    "mode": "unscoped",
+    "matched": [],
+    "available_scope_count": 0,
+    "rule": "The runner automatically resolves active local node scopes from contract text and records the result in talkback."
+  },
+  "build_intake": {
+    "schema": "refer.zo.build-intake.result.v1",
+    "ok": true,
+    "change_id": "hive.task.alliance.app-shell-completion.20260429",
+    "routes": [
+      "/",
+      "/organizations",
+      "/people",
+      "/calendar",
+      "/initiatives",
+      "/documents",
+      "/governance",
+      "/compliance",
+      "/communications",
+      "/profiles",
+      "/settings"
+    ],
+    "activity_path": "\\home\\workspace\\refer-zo-bootstrap\\datasets\\build-activity\\records\\hive.task.alliance.app-shell-completion.20260429.json",
+    "blockers": []
+  },
+  "next": "ratify",
+  "created_at": "2026-04-29T23:18:01.246Z",
+  "summary": "Contract received through Zo Files/API lane. Governed build intake was recorded for future route changes."
+}

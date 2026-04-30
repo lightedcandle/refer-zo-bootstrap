@@ -1,0 +1,30 @@
+{
+  "name": "tandem-talkback",
+  "version": "0.1.0",
+  "description": "Machine-only Zo-to-Codex talkback for tandem file/API contracts.",
+  "resources": [
+    {
+      "name": "outbox",
+      "path": "outbox/",
+      "format": "json"
+    },
+    {
+      "name": "inbox",
+      "path": "inbox/",
+      "format": "json"
+    }
+  ],
+  "schema": {
+    "talkback": {
+      "fields": [
+        { "name": "contract_id", "type": "string" },
+        { "name": "created_at", "type": "string" },
+        { "name": "status", "type": "string" },
+        { "name": "changed", "type": "array" },
+        { "name": "evidence", "type": "array" },
+        { "name": "blockers", "type": "array" },
+        { "name": "next", "type": "string" }
+      ]
+    }
+  }
+}

@@ -29,7 +29,7 @@ Every dynamic bootstrap includes four core components:
    - `Templates/codex-handoff-prompt.md`: The standard workflow handoff template.
 
 3. **App-Specific Drivers**
-   Specialized skill drivers tailored to the specific profile (e.g., `<app>-vipc-driver`, `<app>-design-driver`). These are synced to the `Skills/` folder in Zo Files if they exist in the local `zo-computer/skills/` registry.
+   Specialized skill drivers tailored to the specific profile (e.g., `<app>-vipc-driver`, `<app>-design-driver`). These are synced to the `Skills/` folder in Zo Files if they exist in this repo's local `skills/` registry.
 
 4. **Manifests & Install State**
    The standard `library-manifest.json` and `refer-install-state.json` trackers. These are placed in the Zo Files `Skills/` folder and Files root respectively to allow the `refer-library-bootstrap` skill to reconcile version drift on future boots.
@@ -52,14 +52,26 @@ Every dynamic bootstrap includes four core components:
 
 ## Dynamic Bootstrapping (`vipc-bootstrap.mjs`)
 
-The bootstrap process is automated via `zo-computer/tools/vipc-bootstrap.mjs`.
+The bootstrap process is automated via `tools/vipc-bootstrap.mjs`.
 
-The tool transfers files from the local `zo-computer/` folder relative to this repository, not from a hard-coded machine path. It detects the MCP filesystem address for the Zo Files workspace with `pwd`; use `--remote-root <absolute-path>` if the instance reports a different Files root. It recursively syncs universal skill folders, including `references/`, then syncs profile-specific skill folders whose names begin with the active profile.
+The tool transfers files from this `refer-zo-bootstrap` repository, not from a hard-coded machine path. It detects the MCP filesystem address for the Zo Files workspace with `pwd`; use `--remote-root <absolute-path>` if the instance reports a different Files root. It recursively syncs universal skill folders, including `references/`, then syncs profile-specific skill folders whose names begin with the active profile.
+
+MCP `create_or_rewrite_file` is the controlled text-sync path for binders, skills, manifests, and law files. Large folders, binaries, images, archives, and whole app trees should use Zo Files upload, Zo Desktop sync, cloud import, or another bulk transfer path, then use bootstrap verification to confirm the authority files are present.
 
 ### Usage
 ```bash
 node tools/vipc-bootstrap.mjs --profile telechurch --instance refer
 ```
+
+### Verification
+
+Use verification mode to check a live Zo computer without mutating it:
+
+```bash
+node tools/vipc-bootstrap.mjs --profile telechurch --instance telechurch --mode verify
+```
+
+Verification confirms the binder readback chain, required skills, `REFER.OS`, persona startup marker, and REFER rule markers.
 
 ### Derivation
 If the `--profile` flag is omitted, the tool will attempt to derive the profile by querying the detected Zo Files workspace root, looking for existing project folders or context files.

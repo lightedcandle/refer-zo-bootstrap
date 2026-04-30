@@ -1,0 +1,70 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777512316680",
+  "status": "needs_script",
+  "prompt": "add required email field to member form",
+  "created_at": "2026-04-30T01:25:16.680Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T01:25:16.672Z",
+    "mode": "unscoped",
+    "matched": [],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 13
+  },
+  "matched_script": {
+    "id": "compress-prompt",
+    "name": "Compress Prompt",
+    "type": "gate",
+    "description": "Gatekeeper that routes prompts and approves AI involvement.",
+    "trigger_intents": [
+      "add",
+      "build",
+      "create",
+      "show",
+      "deploy",
+      "scan",
+      "run"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "",
+    "version": "1.0.0",
+    "raw": {
+      "id": "compress-prompt",
+      "name": "Compress Prompt",
+      "type": "gate",
+      "description": "Gatekeeper that routes prompts and approves AI involvement.",
+      "trigger_intents": [
+        "add",
+        "build",
+        "create",
+        "show",
+        "deploy",
+        "scan",
+        "run"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "questions": []
+    }
+  },
+  "execution": null,
+  "script_gap": {
+    "id": "add-required-email-field-to",
+    "draft_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\drafts\\add-required-email-field-to.json",
+    "artifact_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\add-required-email-field-to.mjs"
+  },
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:no_match",
+    "script_lookup:matched_but_missing_script_file",
+    "script_scaffold:created"
+  ],
+  "next": "implement_script_gap"
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777508745136",
+  "status": "needs_script",
+  "prompt": "add an alliance member dashboard widget",
+  "created_at": "2026-04-30T00:25:45.136Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T00:25:45.131Z",
+    "mode": "auto_matched",
+    "matched": [
+      {
+        "scope_id": "alliance-application-build",
+        "label": "Alliance application build",
+        "status": "active",
+        "confidence": 0.8,
+        "score": 4,
+        "categories": [
+          "alliance-hub",
+          "zo-space-routes",
+          "governed-build-intake"
+        ]
+      }
+    ],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 9
+  },
+  "matched_script": {
+    "id": "compress-prompt",
+    "name": "Compress Prompt",
+    "type": "gate",
+    "description": "Gatekeeper — routes prompts, approves AI involvement",
+    "trigger_intents": [
+      "add",
+      "build",
+      "create",
+      "show",
+      "deploy",
+      "scan",
+      "run"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "",
+    "version": "1.0.0",
+    "raw": {
+      "id": "compress-prompt",
+      "name": "Compress Prompt",
+      "type": "gate",
+      "description": "Gatekeeper — routes prompts, approves AI involvement",
+      "trigger_intents": [
+        "add",
+        "build",
+        "create",
+        "show",
+        "deploy",
+        "scan",
+        "run"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "last_run": null,
+      "run_count": 0,
+      "requires_ai": false,
+      "questions": []
+    }
+  },
+  "execution": null,
+  "script_gap": {
+    "id": "add-an-alliance-member-dashboard",
+    "draft_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\drafts\\add-an-alliance-member-dashboard.json",
+    "artifact_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\add-an-alliance-member-dashboard.mjs"
+  },
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:auto_resolved",
+    "script_lookup:matched_but_missing_script_file",
+    "script_scaffold:created"
+  ],
+  "next": "implement_script_gap"
+}

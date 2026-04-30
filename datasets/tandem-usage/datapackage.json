@@ -1,0 +1,35 @@
+{
+  "name": "tandem-usage",
+  "version": "0.1.0",
+  "description": "Zo-local token usage ledger for tandem scripts when the root Codex token dashboard is unavailable.",
+  "resources": [
+    {
+      "name": "token-useage",
+      "path": "token-useage.jsonl",
+      "format": "jsonl"
+    },
+    {
+      "name": "summary",
+      "path": "token-useage-summary.md",
+      "format": "markdown"
+    }
+  ],
+  "schema": {
+    "usage": {
+      "fields": [
+        { "name": "ts", "type": "string" },
+        { "name": "lane", "type": "string" },
+        { "name": "agent", "type": "string" },
+        { "name": "account", "type": "string" },
+        { "name": "zo_computer", "type": "string" },
+        { "name": "input_tokens", "type": "integer" },
+        { "name": "output_tokens", "type": "integer" },
+        { "name": "total_tokens", "type": "integer" },
+        { "name": "source", "type": "string" },
+        { "name": "status", "type": "string" },
+        { "name": "contract_id", "type": "string" },
+        { "name": "note", "type": "string" }
+      ]
+    }
+  }
+}

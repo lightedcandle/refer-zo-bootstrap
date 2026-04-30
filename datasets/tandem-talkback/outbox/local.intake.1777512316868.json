@@ -1,0 +1,73 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777512316868",
+  "status": "done",
+  "prompt": "create page called member directory",
+  "created_at": "2026-04-30T01:25:16.868Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T01:25:16.661Z",
+    "mode": "unscoped",
+    "matched": [],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 13
+  },
+  "matched_script": {
+    "id": "page-add",
+    "name": "Page Add",
+    "type": "forge",
+    "description": "Create a page artifact with standard IMSCE page/index and page-modal structure.",
+    "trigger_intents": [
+      "add page",
+      "create page",
+      "new page",
+      "add route",
+      "create route"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scripts/factory/artifacts/page-add.mjs",
+    "version": "1.1.0",
+    "raw": {
+      "id": "page-add",
+      "name": "Page Add",
+      "type": "forge",
+      "description": "Create a page artifact with standard IMSCE page/index and page-modal structure.",
+      "trigger_intents": [
+        "add page",
+        "create page",
+        "new page",
+        "add route",
+        "create route"
+      ],
+      "status": "active",
+      "version": "1.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/page-add.mjs",
+      "anchors": [
+        "hero",
+        "content",
+        "footer"
+      ]
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\page-add.mjs",
+    "output": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\page-add-1777512316838-member-directory.json\",\n  \"artifact\": {\n    \"schema\": \"refer.zo.atomic-script-artifact.v1\",\n    \"id\": \"page-add.1777512316838.member-directory\",\n    \"created_at\": \"2026-04-30T01:25:16.838Z\",\n    \"script_id\": \"page-add\",\n    \"artifact_kind\": \"page\",\n    \"source_contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"script_id\": \"page-add\",\n      \"prompt\": \"create page called member directory\",\n      \"created_at\": \"2026-04-30T01:25:16.665Z\"\n    },\n    \"target\": {\n      \"route\": \"/member-directory\",\n      \"page_id\": \"I-member-directory\"\n    },\n    \"imsce\": {\n      \"rule\": \"IMSCE order is I -> M -> S -> C -> E. Elements must sit inside cards.\",\n      \"layer\": \"I\",\n      \"modal\": \"2P\",\n      \"sections\": [\n        \"hero\",\n        \"content\",\n        \"footer\"\n      ]\n    },\n    \"props\": {\n      \"label\": \"Member Directory\",\n      \"route\": \"/member-directory\",\n      \"page_modal_id\": \"M-member-directory-Page\",\n      \"default_sections\": [\n        \"hero\",\n        \"content\",\n        \"footer\"\n      ]\n    },\n    \"evidence\": [\n      \"atomic_forge:executed\",\n      \"production_mutation:not_performed\",\n      \"structure:page_index\",\n      \"structure:page_modal_2p\"\n    ],\n    \"next\": \"Feed this artifact to a governed app adapter, then ratify source and route behavior.\"\n  }\n}\n"
+  },
+  "script_gap": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:no_match",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}

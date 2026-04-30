@@ -340,21 +340,33 @@ async function listToolItems(headers, toolName) {
 }
 
 function getPrompt(persona) {
-    return persona?.prompt || persona?.system_prompt || persona?.instructions || "";
+    return persona?.prompt || persona?.system_prompt || persona?.instructions || getStringField(persona, "prompt") || "";
 }
 
 function getInstruction(rule) {
-    return rule?.instruction || rule?.prompt || rule?.text || "";
+    return rule?.instruction || rule?.prompt || rule?.text || getStringField(rule, "instruction") || "";
 }
 
 function getId(item) {
-    return item?.id || item?.persona_id || item?.rule_id || item?._id;
+    if (item && typeof item === "object") return item?.id || item?.persona_id || item?.rule_id || item?._id;
+    return getStringField(item, "id") || getStringField(item, "persona_id") || getStringField(item, "rule_id");
+}
+
+function getName(item) {
+    return item?.name || getStringField(item, "name") || "";
+}
+
+function getStringField(item, field) {
+    if (typeof item !== "string") return "";
+    const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = item.match(new RegExp(`${escaped}=(['"])(.*?)\\1`, "s"));
+    return match?.[2] || "";
 }
 
 async function ensurePersonaGovernance(headers, profile, personaGovernance, workspaceRoot) {
     const personas = await listToolItems(headers, "list_personas");
     const profilePersona = createProfilePersona(profile, personaGovernance, workspaceRoot);
-    const existingProfilePersona = personas.find((p) => String(p?.name || "").toLowerCase() === profilePersona.name.toLowerCase());
+    const existingProfilePersona = personas.find((p) => getName(p).toLowerCase() === profilePersona.name.toLowerCase());
     let activePersonaId = getId(existingProfilePersona);
 
     if (!existingProfilePersona) {
@@ -368,11 +380,15 @@ async function ensurePersonaGovernance(headers, profile, personaGovernance, work
         const prompt = getPrompt(p);
         const personaId = getId(p);
         if (!personaId || !prompt || prompt.includes(PERSONA_STARTUP_MARKER)) continue;
-        console.log(`Appending REFER governance to persona: ${p.name || personaId}`);
+        console.log(`Appending REFER governance to persona: ${getName(p) || personaId}`);
         try {
-            await callTool(headers, "edit_persona", { persona_id: personaId, prompt: `${prompt}\n\n${personaGovernance}` });
+            await callTool(headers, "edit_persona", {
+                persona_id: personaId,
+                prompt_edit: `${prompt}\n\n${personaGovernance}`,
+                edit_instructions: "Append REFER VIPC startup governance without removing existing persona behavior.",
+            });
         } catch (err) {
-            console.error(`  Warning: could not update persona ${p.name || personaId}: ${err.message}`);
+            console.error(`  Warning: could not update persona ${getName(p) || personaId}: ${err.message}`);
         }
     }
 
@@ -383,6 +399,66 @@ async function ensurePersonaGovernance(headers, profile, personaGovernance, work
         } catch (err) {
             console.error(`  Warning: could not set active persona: ${err.message}`);
         }
+    }
+}
+
+async function verifyReadableFile(headers, path, requiredText = "") {
+    const result = await callTool(headers, "read_file", { target_file: path });
+    const text = extractToolText(result);
+    if (requiredText && !text.includes(requiredText)) {
+        throw new Error(`Verification failed for ${path}: missing ${requiredText}`);
+    }
+    console.log(`Verified file: ${path}`);
+}
+
+async function verifyFileDoesNotContain(headers, path, forbiddenText) {
+    const result = await callTool(headers, "read_file", { target_file: path });
+    const text = extractToolText(result);
+    if (text.includes(forbiddenText)) {
+        throw new Error(`Verification failed for ${path}: contains stale text ${forbiddenText}`);
+    }
+    console.log(`Verified stale text absent from: ${path}`);
+}
+
+async function verifyInstall(headers, profile, manifestData, workspaceRoot) {
+    const profileRoot = remoteJoin(workspaceRoot, profile.toUpperCase());
+    const skillNames = new Set([
+        "refer-os",
+        "refer-zo-intake-router",
+        ...(manifestData.universal_skills || []),
+    ]);
+
+    console.log("\n--- Verify: Authority Files ---");
+    await verifyReadableFile(headers, remoteJoin(workspaceRoot, "agent.md"), "REFER Zo Startup Binder");
+    await verifyReadableFile(headers, remoteJoin(workspaceRoot, "AGENTS.md"), "REFER Zo Bootstrap Agent Governance");
+    await verifyReadableFile(headers, remoteJoin(workspaceRoot, "Skills", "library-manifest.json"), "refer-skill-library");
+    await verifyFileDoesNotContain(headers, remoteJoin(workspaceRoot, "Skills", "library-manifest.json"), "E:/refer/zo-computer");
+    await verifyReadableFile(headers, remoteJoin(profileRoot, `${profile}-vipc-operating-rules.md`));
+    await verifyReadableFile(headers, remoteJoin(profileRoot, `${profile}-repo-connection-map.md`));
+
+    console.log("\n--- Verify: Skills ---");
+    for (const skill of skillNames) {
+        await verifyReadableFile(headers, remoteJoin(workspaceRoot, "Skills", skill, "SKILL.md"));
+    }
+
+    console.log("\n--- Verify: REFER Law ---");
+    await callTool(headers, "list_files", { path: remoteJoin(workspaceRoot, "REFER.OS") });
+    console.log(`Verified directory: ${remoteJoin(workspaceRoot, "REFER.OS")}`);
+
+    console.log("\n--- Verify: Persona Startup Marker ---");
+    const personaText = (await listToolItems(headers, "list_personas")).map((p) => `${getName(p)}\n${getPrompt(p)}`).join("\n\n");
+    if (!personaText.includes(PERSONA_STARTUP_MARKER)) {
+        throw new Error(`Verification failed: no persona contains ${PERSONA_STARTUP_MARKER}`);
+    }
+    console.log(`Verified persona marker: ${PERSONA_STARTUP_MARKER}`);
+
+    console.log("\n--- Verify: REFER Rules ---");
+    const existingRulesText = (await listToolItems(headers, "list_rules")).map(getInstruction).join("\n");
+    for (const rule of createReferRules(profile, workspaceRoot)) {
+        if (!existingRulesText.includes(rule.marker)) {
+            throw new Error(`Verification failed: missing rule marker ${rule.marker}`);
+        }
+        console.log(`Verified rule: ${rule.marker}`);
     }
 }
 
@@ -432,11 +508,17 @@ async function main() {
     let profile = null;
     let instance = "refer";
     let remoteRoot = null;
+    let mode = "full";
     
     for (let i = 0; i < args.length; i++) {
         if (args[i] === "--profile" && args[i+1]) profile = args[++i];
         if (args[i] === "--instance" && args[i+1]) instance = args[++i];
         if (args[i] === "--remote-root" && args[i+1]) remoteRoot = args[++i];
+        if (args[i] === "--mode" && args[i+1]) mode = String(args[++i]).toLowerCase();
+        if (args[i] === "--verify-only") mode = "verify";
+    }
+    if (!["full", "verify"].includes(mode)) {
+        throw new Error(`Unsupported --mode ${mode}. Use full or verify.`);
     }
     
     const env = await loadEnv();
@@ -459,7 +541,20 @@ async function main() {
     const PROFILE = profile.toUpperCase();
     const profileRoot = remoteJoin(workspaceRoot, PROFILE);
     const skillsRoot = remoteJoin(workspaceRoot, "Skills");
-    console.log(`\nStarting VIPC Bootstrap for profile: ${profile} (Folder: ${profileRoot})`);
+    console.log(`\nStarting VIPC Bootstrap for profile: ${profile} (Folder: ${profileRoot}, mode: ${mode})`);
+
+    let manifestData = { universal_skills: [] };
+    try {
+        manifestData = JSON.parse(await readFile(join(SKILLS_DIR, "library-manifest.json"), "utf8"));
+    } catch {
+        console.log("Warning: Could not load local library-manifest.json. Ensure it exists at " + join(SKILLS_DIR, "library-manifest.json"));
+    }
+
+    if (mode === "verify") {
+        await verifyInstall(headers, profile, manifestData, workspaceRoot);
+        console.log("\nBootstrap verification complete.");
+        return;
+    }
     
     // Phase 1: Directories
     console.log("\n--- Phase 1: Authority Surfaces ---");
@@ -485,14 +580,6 @@ async function main() {
     
     // Phase 2 & 3: Skills and Manifests
     console.log("\n--- Phase 2 & 3: Skills & Manifests ---");
-    
-    let manifestData = { universal_skills: [] };
-    
-    try {
-        manifestData = JSON.parse(await readFile(join(SKILLS_DIR, "library-manifest.json"), "utf8"));
-    } catch {
-        console.log("Warning: Could not load local library-manifest.json. Ensure it exists at " + join(SKILLS_DIR, "library-manifest.json"));
-    }
     
     // Universal Skills
     for (const skill of manifestData.universal_skills || []) {
@@ -531,6 +618,7 @@ async function main() {
             const personaGovernance = createPersonaGovernanceAppendix(profile, manifestData, addendum, workspaceRoot);
             await ensurePersonaGovernance(headers, profile, personaGovernance, workspaceRoot);
             await ensureReferRules(headers, profile, workspaceRoot);
+            await verifyInstall(headers, profile, manifestData, workspaceRoot);
         } else {
             console.log("Universal addendum file not found locally. Skipping injection.");
         }

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
+/**
  * @opcodes ['INIT_ALL', 'STORE_LOG', 'QUERY', 'COUNT']
  * @trigger store log query dataset
  * @description Manages DuckDB datasets for chat-contracts, chat-logs, hive-events, node-registry, request-log, script-registry
  * @forge-type dataset
  * @forge-name Dataset Store
  * @forge-id dataset-store
-/**
+ *
  * dataset-store.mjs — Unified DuckDB store for all Script Factory datasets.
  * Auto-generates camelCase accessors: store.chatContracts.log({...})
  */

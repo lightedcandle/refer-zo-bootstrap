@@ -1,0 +1,81 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777512342751",
+  "status": "done",
+  "prompt": "add dashboard widget for alliance metrics",
+  "created_at": "2026-04-30T01:25:42.751Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-04-30T01:25:42.590Z",
+    "mode": "auto_matched",
+    "matched": [
+      {
+        "scope_id": "alliance-application-build",
+        "label": "Alliance application build",
+        "status": "active",
+        "confidence": 0.8,
+        "score": 4,
+        "categories": [
+          "alliance-hub",
+          "zo-space-routes",
+          "governed-build-intake"
+        ]
+      }
+    ],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 13
+  },
+  "matched_script": {
+    "id": "card-add",
+    "name": "Card Add",
+    "type": "forge",
+    "description": "Create a card artifact with slots for title, body, and actions.",
+    "trigger_intents": [
+      "add card",
+      "create card",
+      "new card",
+      "add widget",
+      "dashboard widget"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scripts/factory/artifacts/card-add.mjs",
+    "version": "1.0.0",
+    "raw": {
+      "id": "card-add",
+      "name": "Card Add",
+      "type": "forge",
+      "description": "Create a card artifact with slots for title, body, and actions.",
+      "trigger_intents": [
+        "add card",
+        "create card",
+        "new card",
+        "add widget",
+        "dashboard widget"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "artifacts/card-add.mjs"
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\card-add.mjs",
+    "output": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\card-add-1777512342733-alliance-metrics.json\",\n  \"artifact\": {\n    \"schema\": \"refer.zo.atomic-script-artifact.v1\",\n    \"id\": \"card-add.1777512342733.alliance-metrics\",\n    \"created_at\": \"2026-04-30T01:25:42.733Z\",\n    \"script_id\": \"card-add\",\n    \"artifact_kind\": \"card\",\n    \"source_contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"script_id\": \"card-add\",\n      \"prompt\": \"add dashboard widget for alliance metrics\",\n      \"created_at\": \"2026-04-30T01:25:42.601Z\"\n    },\n    \"target\": {\n      \"route\": \"/\",\n      \"card_id\": \"C-alliance-metrics-D1\"\n    },\n    \"imsce\": {\n      \"rule\": \"IMSCE order is I -> M -> S -> C -> E. Elements must sit inside cards.\",\n      \"layer\": \"C\",\n      \"density\": \"D1\",\n      \"required_parent\": \"S\",\n      \"allowed_children\": [\n        \"E\"\n      ]\n    },\n    \"props\": {\n      \"label\": \"Alliance Metrics\",\n      \"layout_kind\": \"stack\",\n      \"slots\": [\n        \"title\",\n        \"body\",\n        \"actions\"\n      ],\n      \"role_class\": \"role-card\"\n    },\n    \"evidence\": [\n      \"atomic_forge:executed\",\n      \"production_mutation:not_performed\",\n      \"structure:card_requires_section_parent\",\n      \"cards:data_spec\"\n    ],\n    \"next\": \"Feed this artifact to a governed app adapter, then ratify source and route behavior.\"\n  }\n}\n"
+  },
+  "script_gap": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:auto_resolved",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}
