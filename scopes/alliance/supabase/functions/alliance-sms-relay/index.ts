@@ -10,6 +10,7 @@ const relayToken = Deno.env.get("ALLIANCE_SMS_RELAY_TOKEN") || "";
 const profileBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_BASE_URL") || "https://telechurchlive.com/allianceprofile");
 const profileUploadBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_UPLOAD_BASE_URL") || `${profileBaseUrl}/upload`);
 const profileFormBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_FORM_BASE_URL") || "https://alliance.telechurchlive.com/profile");
+const hubBaseUrl = trimSlash(profileFormBaseUrl.replace(/\/profile$/, ""));
 const profileFormSecret = Deno.env.get("ALLIANCE_PROFILE_FORM_SECRET") || relayToken;
 const bridgePhoneNumber = onlyDigits(Deno.env.get("ALLIANCE_BRIDGE_PHONE_NUMBER") || "");
 const unknownIntentReply = "I'm not sure about that one yet. You can find a full guide on how to use the Alliance Hub here:\nhttps://alliance.telechurchlive.com/help";
@@ -314,11 +315,20 @@ async function routeRegisteredSmsIntent(phone: string, inbound: string, context:
       values.edit_form_token_expires_at = new Date(expiresAt).toISOString();
       values.edit_form_token_used_at = null;
       values.edit_requested_at = new Date(issuedAt).toISOString();
+      const shortLink = await createShortProfileLink(editToken, {
+        mode: "edit",
+        phone,
+        profile_id: profileIdValue,
+        expires_at: values.edit_form_token_expires_at,
+      }).catch(() => null);
+      const editUrl = shortLink?.short_url || `${profileFormBaseUrl}/${encodeURIComponent(editToken)}`;
+      values.edit_form_short_url = editUrl;
+      values.edit_form_short_code = shortLink?.code || "";
       await saveProfileContext(String(context.id || "") || null, phone, values);
 
       const message = [
         "Alliance profile edit link:",
-        `${profileFormBaseUrl}/${encodeURIComponent(editToken)}`,
+        editUrl,
         "This secure link expires in 30 minutes.",
       ].join("\n");
       const delivery = await queueSms(phone, message, {
@@ -621,6 +631,49 @@ async function saveProfileContext(id: string | null, phone: string, values: Prof
   return Array.isArray(rows) ? rows[0] : rows;
 }
 
+async function createShortProfileLink(token: string, options: Record<string, unknown> = {}) {
+  const cleanToken = cleanName(token);
+  if (!cleanToken) return null;
+  const targetPath = `/profile/${encodeURIComponent(cleanToken)}`;
+  const nowIso = new Date().toISOString();
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = shortCode();
+    const existing = await latestShortLink(code).catch(() => null);
+    if (existing) continue;
+    const inserted = await rest("/alliance_records?select=id", {
+      method: "POST",
+      body: {
+        entity: "alliance_short_link",
+        label: `Alliance short link ${code}`,
+        route: `alliance-short-link:${code}`,
+        local_dataset: "alliance-short-links",
+        status: "active",
+        values: {
+          code,
+          token: cleanToken,
+          target_path: targetPath,
+          mode: cleanName(options.mode),
+          profile_id: cleanName(options.profile_id),
+          phone: onlyDigits(String(options.phone || "")),
+          expires_at: cleanName(options.expires_at),
+          created_at: nowIso,
+        },
+      },
+    });
+    return {
+      code,
+      short_url: `${hubBaseUrl}/a/${encodeURIComponent(code)}`,
+      record: Array.isArray(inserted) ? inserted[0] : inserted,
+    };
+  }
+  return null;
+}
+
+async function latestShortLink(code: string) {
+  const rows = await rest(`/alliance_records?entity=eq.alliance_short_link&route=eq.${encodeURIComponent(`alliance-short-link:${code}`)}&order=updated_at.desc&limit=1&select=id,status,values`);
+  return Array.isArray(rows) ? rows[0] : null;
+}
+
 async function advanceProfileState(values: ProfileContextValues, inbound: string) {
   const command = inbound.toUpperCase();
   values.collected_values = values.collected_values || {};
@@ -654,6 +707,13 @@ async function advanceProfileState(values: ProfileContextValues, inbound: string
   values.status = values.request_count >= 3 ? "paused" : "active";
   values.form_token = values.form_token || await profileFormToken(values.phone);
   values.form_url = `${profileFormBaseUrl}/${encodeURIComponent(values.form_token)}`;
+  const shortLink = await createShortProfileLink(values.form_token, {
+    mode: "register",
+    phone: values.phone,
+  }).catch(() => null);
+  values.short_form_url = shortLink?.short_url || values.form_url;
+  values.short_form_code = shortLink?.code || "";
+  const smsFormUrl = values.short_form_url || values.form_url;
 
   if (values.request_count >= 3) {
     return {
@@ -661,7 +721,7 @@ async function advanceProfileState(values: ProfileContextValues, inbound: string
       outbound: [
         "This number is paused from receiving more Alliance profile prompts until setup is complete.",
         "Please click the link below to complete your profile and authorize us to message you.",
-        values.form_url,
+        smsFormUrl,
         "Thank you.",
       ].join("\n"),
     };
@@ -673,7 +733,7 @@ async function advanceProfileState(values: ProfileContextValues, inbound: string
       outbound: [
         "Please complete your Alliance profile to gain access.",
         "Your phone number is already attached to this secure form and cannot be changed there.",
-        values.form_url,
+        smsFormUrl,
       ].join("\n"),
     };
   }
@@ -682,7 +742,7 @@ async function advanceProfileState(values: ProfileContextValues, inbound: string
     ok: true,
     outbound: [
       "Hi, got your message. Please register here so your message can be passed on to the admin.",
-      values.form_url,
+      smsFormUrl,
     ].join("\n"),
   };
 }
@@ -778,6 +838,15 @@ function onlyDigits(value: string) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function shortCode() {
+  const alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = new Uint8Array(7);
+  crypto.getRandomValues(bytes);
+  let code = "A";
+  for (const byte of bytes) code += alphabet[byte % alphabet.length];
+  return code;
+}
+
 function trimSlash(value: string) {
   return String(value || "").replace(/\/$/, "");
 }
@@ -797,10 +866,14 @@ type ProfileContextValues = {
   request_count?: number;
   form_token?: string;
   form_url?: string;
+  short_form_url?: string;
+  short_form_code?: string;
   events?: Array<Record<string, unknown>>;
   profile?: Record<string, unknown>;
   profile_id?: string;
   edit_form_token?: string | null;
+  edit_form_short_url?: string;
+  edit_form_short_code?: string;
   edit_form_token_expires_at?: string | null;
   edit_form_token_used_at?: string | null;
   edit_requested_at?: string;
