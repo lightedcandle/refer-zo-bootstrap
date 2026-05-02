@@ -1,0 +1,32 @@
+{
+  "schema": "refer.alliance.sms-relay-deploy.v1",
+  "generated_at": "2026-05-02T06:58:30.292Z",
+  "project_ref": "skqmzcdmfaijxpbvcdal",
+  "function_name": "alliance-sms-relay",
+  "migration": {
+    "applied": false
+  },
+  "deployed": true,
+  "secret_values_printed": false,
+  "evidence": [
+    "env:loaded_without_printing_secrets",
+    "relay_token:loaded_without_printing"
+  ],
+  "results": [
+    {
+      "step": "secrets_set",
+      "status": 0,
+      "ok": true,
+      "stdout": "Finished supabase secrets set.",
+      "stderr": "A new version of Supabase CLI is available: v2.95.4 (currently installed v2.58.5)\nWe recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli"
+    },
+    {
+      "step": "functions_deploy",
+      "status": 0,
+      "ok": true,
+      "stdout": "Deployed Functions on project skqmzcdmfaijxpbvcdal: alliance-sms-relay\nYou can inspect your deployment in the Dashboard: https://supabase.com/dashboard/project/skqmzcdmfaijxpbvcdal/functions",
+      "stderr": "Bundling Function: alliance-sms-relay\nSpecifying decorator through flags is no longer supported. Please use deno.json instead.\nDeploying Function: alliance-sms-relay (script size: 13.64kB)\nA new version of Supabase CLI is available: v2.95.4 (currently installed v2.58.5)\nWe recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli"
+    }
+  ],
+  "verdict": "sms_relay_ready"
+}

@@ -1,0 +1,815 @@
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-dispatcher-token",
+};
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const serviceKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+const relayToken = Deno.env.get("ALLIANCE_SMS_RELAY_TOKEN") || "";
+const profileBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_BASE_URL") || "https://telechurchlive.com/allianceprofile");
+const profileUploadBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_UPLOAD_BASE_URL") || `${profileBaseUrl}/upload`);
+const profileFormBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_FORM_BASE_URL") || "https://alliance.telechurchlive.com/profile");
+const profileFormSecret = Deno.env.get("ALLIANCE_PROFILE_FORM_SECRET") || relayToken;
+const bridgePhoneNumber = onlyDigits(Deno.env.get("ALLIANCE_BRIDGE_PHONE_NUMBER") || "");
+const unknownIntentReply = "I'm not sure about that one yet. You can find a full guide on how to use the Alliance Hub here:\nhttps://alliance.telechurchlive.com/help";
+const sectionStubReply = "Ok, we're still working on that section. We'll let you know once it is ready.";
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return json({ ok: true });
+
+  const url = new URL(req.url);
+  const route = routePath(url.pathname);
+
+  if (route === "/health" && req.method === "GET") {
+    return json({
+      ok: Boolean(supabaseUrl && serviceKey && relayToken),
+      service: "alliance-sms-relay",
+      tables: ["alliance_sms_outbox", "alliance_sms_inbox", "alliance_sms_delivery_events"],
+    });
+  }
+
+  if (!authorized(req)) return json({ ok: false, error: "unauthorized" }, 401);
+  if (!supabaseUrl || !serviceKey) return json({ ok: false, error: "sms_relay_not_configured" }, 500);
+
+  try {
+    if (route === "/sms/send" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      return json(await queueSms(required(body.to, "to"), required(body.message, "message"), body));
+    }
+
+    if (route === "/phone/next" && req.method === "GET") {
+      return json(await nextJob());
+    }
+
+    if (route === "/phone/report" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      return json(await reportJob(required(body.id, "id"), String(body.status || "unknown"), body.error));
+    }
+
+    if (route === "/phone/inbound" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      return json(await recordInbound(required(body.from, "from"), required(body.body, "body"), body.date));
+    }
+
+    if (route === "/sms/latest" && req.method === "GET") {
+      return json(await latestInbound(required(url.searchParams.get("from"), "from")));
+    }
+
+    return json({ ok: false, error: "not_found" }, 404);
+  } catch (error) {
+    return json({ ok: false, error: error?.message || "sms_relay_failed" }, 500);
+  }
+});
+
+async function queueSms(to: string, message: string, raw: Record<string, unknown>) {
+  const inserted = await rest("/alliance_sms_outbox?select=id,to_phone,message,status,queued_at", {
+    method: "POST",
+    body: {
+      to_phone: to,
+      message,
+      status: "queued",
+      metadata: { source: "alliance_sms_relay", raw },
+    },
+  });
+  const job = Array.isArray(inserted) ? inserted[0] : inserted;
+  await writeRecord("outbound", to, message, { transport: "supabase_edge_relay", job_id: job?.id });
+  return { ok: true, delivery: "queued_for_phone_relay", job };
+}
+
+async function nextJob() {
+  const rows = await rest("/alliance_sms_outbox?status=eq.queued&order=queued_at.asc&limit=1&select=id,to_phone,message,status,queued_at");
+  const job = Array.isArray(rows) ? rows[0] : null;
+  if (!job) return { ok: true, job: null };
+
+  await rest(`/alliance_sms_outbox?id=eq.${encodeURIComponent(job.id)}`, {
+    method: "PATCH",
+    body: { status: "claimed", claimed_at: new Date().toISOString() },
+  });
+
+  return {
+    ok: true,
+    job: {
+      id: job.id,
+      to: job.to_phone,
+      message: job.message,
+      status: "claimed",
+      queued_at: job.queued_at,
+    },
+  };
+}
+
+async function reportJob(id: string, status: string, error?: unknown) {
+  const patch: Record<string, unknown> = {
+    status,
+    error: error ? String(error) : null,
+    metadata: { reported_at: new Date().toISOString() },
+  };
+  if (status === "sent") patch.sent_at = new Date().toISOString();
+
+  await rest(`/alliance_sms_outbox?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: patch,
+  });
+  const event = await rest("/alliance_sms_delivery_events?select=id,status", {
+    method: "POST",
+    body: {
+      outbox_id: id,
+      status,
+      error: error ? String(error) : null,
+      metadata: { source: "android_phone_relay" },
+    },
+  });
+  return { ok: true, event: Array.isArray(event) ? event[0] : event };
+}
+
+async function recordInbound(from: string, body: string, date: unknown) {
+  const messageDate = Number(date || Date.now());
+  if (isBridgeSelfPhone(from)) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: "bridge_self_message",
+      from_phone: from,
+      message_date: messageDate,
+    };
+  }
+  const duplicate = await existingInbound(from, body, messageDate);
+  if (duplicate) {
+    return {
+      ok: true,
+      ignored: true,
+      reason: "duplicate_inbound",
+      message: duplicate,
+      profile: { ok: true, routed: false, reason: "duplicate_inbound" },
+    };
+  }
+  const inserted = await rest("/alliance_sms_inbox?select=id,from_phone,body,message_date,received_at", {
+    method: "POST",
+    body: {
+      from_phone: from,
+      body,
+      message_date: messageDate,
+      metadata: { source: "android_phone_relay" },
+    },
+  });
+  const message = Array.isArray(inserted) ? inserted[0] : inserted;
+  await writeRecord("inbound", from, body, { transport: "supabase_edge_relay", message_date: messageDate });
+  const profile = await advanceProfileIntake(from, body);
+  return { ok: true, message, profile };
+}
+
+async function existingInbound(from: string, body: string, messageDate: number) {
+  const digits = onlyDigits(from);
+  const rows = await rest(`/alliance_sms_inbox?from_phone=ilike.*${encodeURIComponent(digits)}&message_date=eq.${encodeURIComponent(String(messageDate))}&body=eq.${encodeURIComponent(body)}&limit=1&select=id,from_phone,body,message_date,received_at`);
+  return Array.isArray(rows) ? rows[0] : null;
+}
+
+async function latestInbound(from: string) {
+  const digits = onlyDigits(from);
+  const rows = await rest(`/alliance_sms_inbox?from_phone=ilike.*${encodeURIComponent(digits)}&order=message_date.desc&limit=1&select=id,from_phone,body,message_date,received_at`);
+  const message = Array.isArray(rows) ? rows[0] : null;
+  return { ok: true, message };
+}
+
+async function writeRecord(direction: string, phone: string, body: string, values: Record<string, unknown>) {
+  await rest("/alliance_records?select=id", {
+    method: "POST",
+    body: {
+      entity: "sms_message",
+      label: `SMS ${direction} ${phone}`,
+      route: `alliance-sms-relay:/sms/${direction}`,
+      local_dataset: "alliance-sms-relay",
+      status: direction === "outbound" ? "queued" : "received",
+      values: {
+        direction,
+        phone,
+        body,
+        source: "alliance_sms_relay_edge",
+        recorded_at: new Date().toISOString(),
+        ...values,
+      },
+    },
+  });
+}
+
+async function advanceProfileIntake(from: string, inboundBody: string) {
+  const phone = onlyDigits(from);
+  const inbound = String(inboundBody || "").trim();
+  const existing = await latestProfileContext(phone);
+  if (isResetCommand(inbound)) {
+    return resetProfileIntake(phone, existing);
+  }
+  if (isCompletedProfileContext(existing)) {
+    const known = await routeRegisteredSmsIntent(phone, inbound, existing);
+    if (known) return known;
+    return recordSmsIntakeGap(phone, inbound, "registered_phone_unknown_intent");
+  }
+
+  const context = existing || {
+    id: null,
+    values: {
+      phone,
+      script_id: "alliance.profile_setup.sms.v1",
+      state: "awaiting_start",
+      collected_values: {},
+      events: [],
+      status: "active",
+    },
+  };
+
+  const values = context.values as ProfileContextValues;
+  const transition = await advanceProfileState(values, inbound);
+  values.events = [...(values.events || []), {
+    direction: "inbound",
+    body: inbound,
+    at: new Date().toISOString(),
+  }, {
+    direction: "outbound",
+    body: transition.outbound,
+    at: new Date().toISOString(),
+  }].slice(-50);
+
+  const saved = await saveProfileContext(context.id, phone, values);
+  const delivery = transition.outbound ? await queueSms(phone, transition.outbound, {
+    source: "alliance_profile_intake",
+    script_id: values.script_id,
+    state: values.state,
+  }) : { ok: true, skipped: true, reason: transition.reason || "no_outbound" };
+
+  let profileRecord = null;
+  if (transition.profile) {
+    profileRecord = await rest("/alliance_records?select=id,entity,label,status,values", {
+      method: "POST",
+      body: {
+        entity: "alliance_profile",
+        label: `Alliance profile ${transition.profile.first_name} ${transition.profile.last_name}`,
+        route: `alliance-profile:${transition.profile.id}`,
+        local_dataset: "alliance-sms-profile-intake",
+        status: "active",
+        values: transition.profile,
+      },
+    });
+  }
+
+  return {
+    ok: true,
+    routed: true,
+    state: values.state,
+    context_id: saved.id,
+    outbound: transition.outbound,
+    delivery,
+    profile: transition.profile || null,
+    profile_record: Array.isArray(profileRecord) ? profileRecord[0] : profileRecord,
+  };
+}
+
+async function routeRegisteredSmsIntent(phone: string, inbound: string, context: Record<string, unknown>) {
+  const normalized = normalizeSmsIntentText(inbound);
+  const values = (context.values || {}) as ProfileContextValues;
+  const profile = (values.profile || {}) as Record<string, unknown>;
+  const firstName = cleanName(profile.first_name) || "there";
+
+  if (isGreetingIntent(normalized)) {
+    const message = [
+      `Hello ${firstName}, how are you today?`,
+      "How can I help? You can quickly reply:",
+      "Profile, Events, Give, About, My Church, Next Event",
+    ].join("\n");
+    const delivery = await queueSms(phone, message, {
+      source: "alliance_sms_greeting_menu",
+      script_id: "alliance.sms_greeting_menu.v1",
+      router_script_id: "alliance.sms_router.v1",
+    });
+    await recordSmsRouteDecision(phone, inbound, {
+      script_id: "alliance.sms_greeting_menu.v1",
+      normalized_body: normalized,
+      response: message,
+    });
+    return {
+      ok: true,
+      routed: true,
+      reason: "registered_phone_greeting_menu",
+      script_id: "alliance.sms_greeting_menu.v1",
+      router_script_id: "alliance.sms_router.v1",
+      outbound: message,
+      delivery,
+    };
+  }
+
+  if (/\b(profile|account|info|settings|name)\b/.test(normalized) || /\b(update|edit|change)\b/.test(normalized)) {
+    const profileIdValue = cleanName(values.profile_id || profile.id);
+    const isEdit = /\b(edit|update|change)\b/.test(normalized);
+    if (isEdit && profileIdValue) {
+      const issuedAt = Date.now();
+      const expiresAt = issuedAt + 30 * 60 * 1000;
+      const editToken = await createProfileToken({
+        p: phone,
+        m: "edit",
+        pid: profileIdValue,
+        iat: issuedAt,
+        exp: expiresAt,
+      }, profileFormSecret);
+      values.edit_form_token = editToken;
+      values.edit_form_token_expires_at = new Date(expiresAt).toISOString();
+      values.edit_form_token_used_at = null;
+      values.edit_requested_at = new Date(issuedAt).toISOString();
+      await saveProfileContext(String(context.id || "") || null, phone, values);
+
+      const message = [
+        "Alliance profile edit link:",
+        `${profileFormBaseUrl}/${encodeURIComponent(editToken)}`,
+        "This secure link expires in 30 minutes.",
+      ].join("\n");
+      const delivery = await queueSms(phone, message, {
+        source: "alliance_sms_profile_edit",
+        script_id: "alliance.profile_edit.question.v1",
+        router_script_id: "alliance.sms_router.v1",
+        profile_id: profileIdValue,
+      });
+
+      await recordSmsRouteDecision(phone, inbound, {
+        script_id: "alliance.profile_edit.question.v1",
+        normalized_body: normalized,
+        response: message,
+        profile_id: profileIdValue,
+      });
+
+      return {
+        ok: true,
+        routed: true,
+        reason: "registered_phone_profile_edit_request",
+        script_id: "alliance.profile_edit.question.v1",
+        router_script_id: "alliance.sms_router.v1",
+        outbound: message,
+        delivery,
+      };
+    }
+
+    const message = profileIdValue
+      ? [
+        "Alliance profile link:",
+        `https://alliance.telechurchlive.com/member/${encodeURIComponent(profileIdValue)}`,
+        "Open it to view your profile, edit it, or manage your church connection.",
+      ].join("\n")
+      : unknownIntentReply;
+    const delivery = await queueSms(phone, message, {
+      source: "alliance_sms_profile_link",
+      script_id: "alliance.profile_link.question.v1",
+      router_script_id: "alliance.sms_router.v1",
+      profile_id: profileIdValue,
+    });
+    await recordSmsRouteDecision(phone, inbound, {
+      script_id: "alliance.profile_link.question.v1",
+      normalized_body: normalized,
+      response: message,
+      profile_id: profileIdValue,
+    });
+    return {
+      ok: true,
+      routed: true,
+      reason: "registered_phone_profile_link",
+      script_id: "alliance.profile_link.question.v1",
+      router_script_id: "alliance.sms_router.v1",
+      outbound: message,
+      delivery,
+    };
+  }
+
+  const stub = stubIntent(normalized);
+  if (!stub) return null;
+
+  await recordNotificationInterest(phone, inbound, stub.section, stub.script_id);
+  const delivery = await queueSms(phone, sectionStubReply, {
+    source: "alliance_sms_section_stub",
+    script_id: "alliance.sms_section_stub.v1",
+    router_script_id: "alliance.sms_router.v1",
+    suggested_script_id: stub.script_id,
+    section: stub.section,
+  });
+  await recordSmsRouteDecision(phone, inbound, {
+    script_id: "alliance.sms_section_stub.v1",
+    normalized_body: normalized,
+    suggested_script_id: stub.script_id,
+    section: stub.section,
+    response: sectionStubReply,
+  });
+  return {
+    ok: true,
+    routed: true,
+    reason: "registered_phone_section_stub",
+    script_id: "alliance.sms_section_stub.v1",
+    router_script_id: "alliance.sms_router.v1",
+    suggested_script_id: stub.script_id,
+    section: stub.section,
+    outbound: sectionStubReply,
+    delivery,
+  };
+}
+
+async function recordSmsRouteDecision(phone: string, inbound: string, values: Record<string, unknown>) {
+  await rest("/alliance_records?select=id", {
+    method: "POST",
+    body: {
+      entity: "sms_route_decision",
+      label: `SMS route decision ${phone}`,
+      route: `alliance-sms-router:${values.script_id || "unknown"}:${phone}`,
+      local_dataset: "alliance-sms-intake",
+      status: "routed",
+      values: {
+        phone,
+        body: inbound,
+        router_script_id: "alliance.sms_router.v1",
+        routed_at: new Date().toISOString(),
+        ...values,
+      },
+    },
+  });
+}
+
+async function recordNotificationInterest(phone: string, inbound: string, section: string, scriptId: string) {
+  await rest("/alliance_records?select=id", {
+    method: "POST",
+    body: {
+      entity: "sms_notification_interest",
+      label: `SMS notify interest ${section} ${phone}`,
+      route: `alliance-notify-interest:${section}:${phone}`,
+      local_dataset: "alliance-sms-intake",
+      status: "waiting",
+      values: {
+        phone,
+        body: inbound,
+        section,
+        script_id: "alliance.sms_section_stub.v1",
+        requested_script_id: scriptId,
+        notify_when_ready: true,
+        created_at: new Date().toISOString(),
+      },
+    },
+  });
+}
+
+async function recordSmsIntakeGap(phone: string, inbound: string, reason: string) {
+  const nowIso = new Date().toISOString();
+  const normalized = normalizeSmsIntentText(inbound);
+  const suggestedScriptId = suggestSmsScriptId(normalized);
+  const gapValues = {
+    phone,
+    body: inbound,
+    normalized_body: normalized,
+    reason,
+    script_id: "alliance.sms_unknown_intent.v1",
+    router_script_id: "alliance.sms_router.v1",
+    suggested_script_id: suggestedScriptId,
+    suggested_response: unknownIntentReply,
+    status: "queued_for_script_factory_review",
+    created_at: nowIso,
+  };
+
+  const inserted = await rest("/alliance_records?select=id,entity,label,status,values", {
+    method: "POST",
+    body: {
+      entity: "sms_intake_gap",
+      label: `SMS intake gap ${phone}`,
+      route: `alliance-sms-router:unknown:${phone}`,
+      local_dataset: "alliance-sms-intake",
+      status: "queued",
+      values: gapValues,
+    },
+  });
+  const gap = Array.isArray(inserted) ? inserted[0] : inserted;
+  const delivery = await queueSms(phone, unknownIntentReply, {
+    source: "alliance_sms_unknown_intent",
+    script_id: "alliance.sms_unknown_intent.v1",
+    router_script_id: "alliance.sms_router.v1",
+    intake_gap_id: gap?.id,
+    suggested_script_id: suggestedScriptId,
+  });
+
+  return {
+    ok: true,
+    routed: true,
+    reason,
+    script_id: "alliance.sms_unknown_intent.v1",
+    router_script_id: "alliance.sms_router.v1",
+    suggested_script_id: suggestedScriptId,
+    outbound: unknownIntentReply,
+    intake_gap: gap,
+    delivery,
+  };
+}
+
+function normalizeSmsIntentText(value: string) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s']/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function isGreetingIntent(normalized: string) {
+  return /^(hello|hi|hey|hey there|hey alliance|hello alliance|hi alliance)$/.test(normalized);
+}
+
+function stubIntent(normalized: string) {
+  if (/^(events?|event list|calendar)$/.test(normalized)) {
+    return { section: "events", script_id: "alliance.events.section.v1" };
+  }
+  if (/^(give|giving|donate|offering)$/.test(normalized)) {
+    return { section: "give", script_id: "alliance.give.section.v1" };
+  }
+  if (/^(about|about alliance|the alliance)$/.test(normalized)) {
+    return { section: "about", script_id: "alliance.about.section.v1" };
+  }
+  if (/^(my church|church|organization|my organization)$/.test(normalized)) {
+    return { section: "my_church", script_id: "alliance.my_church.section.v1" };
+  }
+  if (/^(next event|next service|when is the next event|when is church)$/.test(normalized)) {
+    return { section: "next_event", script_id: "alliance.next_event.question.v1" };
+  }
+  return null;
+}
+
+function suggestSmsScriptId(normalized: string) {
+  if (isGreetingIntent(normalized)) {
+    return "alliance.sms_greeting_menu.v1";
+  }
+  const stub = stubIntent(normalized);
+  if (stub) return stub.script_id;
+  if (/\b(next|nxt|upcoming)\b/.test(normalized) && /\b(event|service|meeting|calendar)\b/.test(normalized)) {
+    return "alliance.next_event.question.v1";
+  }
+  if (/\b(profile|profle|account)\b/.test(normalized) && /\b(link|edit|change|update|send)\b/.test(normalized)) {
+    return "alliance.profile_link.question.v1";
+  }
+  if (/\b(group|groups|join|class|team)\b/.test(normalized)) {
+    return "alliance.group_list.question.v1";
+  }
+  if (/\b(register|signup|sign up|rsvp)\b/.test(normalized) && /\b(event|service|sunday|meeting)\b/.test(normalized)) {
+    return "alliance.event_register.sms.v1";
+  }
+  return "alliance.sms_script_draft.v1";
+}
+
+async function resetProfileIntake(phone: string, existing: Record<string, unknown> | null) {
+  const nowIso = new Date().toISOString();
+  const values: ProfileContextValues = {
+    phone,
+    script_id: "alliance.profile_setup.sms.v1",
+    state: "awaiting_start",
+    status: "active",
+    collected_values: {},
+    request_count: 0,
+    form_token: await profileFormToken(phone),
+    form_url: "",
+    events: [{
+      direction: "system",
+      body: "Profile setup reset by SMS command.",
+      at: nowIso,
+    }],
+    reset_at: nowIso,
+  };
+  values.form_url = `${profileFormBaseUrl}/${encodeURIComponent(values.form_token || "")}`;
+  const transition = await advanceProfileState(values, "Hello Alliance");
+  values.events = [...(values.events || []), {
+    direction: "outbound",
+    body: transition.outbound,
+    at: new Date().toISOString(),
+  }].slice(-50);
+  const saved = await saveProfileContext(String(existing?.id || "") || null, phone, values);
+  const delivery = transition.outbound ? await queueSms(phone, transition.outbound, {
+    source: "alliance_profile_intake_reset",
+    script_id: values.script_id,
+    state: values.state,
+  }) : { ok: true, skipped: true };
+  return {
+    ok: true,
+    routed: true,
+    reason: "profile_setup_reset",
+    state: values.state,
+    context_id: saved.id,
+    outbound: transition.outbound,
+    delivery,
+  };
+}
+
+async function latestProfileContext(phone: string) {
+  const rows = await rest(`/alliance_records?entity=eq.sms_profile_context&route=eq.${encodeURIComponent(`alliance-profile-context:${phone}`)}&order=updated_at.desc&limit=1&select=id,values`);
+  return Array.isArray(rows) ? rows[0] : null;
+}
+
+async function saveProfileContext(id: string | null, phone: string, values: ProfileContextValues) {
+  const body = {
+    entity: "sms_profile_context",
+    label: `SMS profile context ${phone}`,
+    route: `alliance-profile-context:${phone}`,
+    local_dataset: "alliance-sms-profile-intake",
+    status: values.status || "active",
+    values,
+  };
+  if (id) {
+    const rows = await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&select=id`, {
+      method: "PATCH",
+      body,
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+  const rows = await rest("/alliance_records?select=id", {
+    method: "POST",
+    body,
+  });
+  return Array.isArray(rows) ? rows[0] : rows;
+}
+
+async function advanceProfileState(values: ProfileContextValues, inbound: string) {
+  const command = inbound.toUpperCase();
+  values.collected_values = values.collected_values || {};
+  values.request_count = Number(values.request_count || 0);
+  if (command === "STOP" || command === "CANCEL") {
+    values.state = "cancelled";
+    values.status = "cancelled";
+    return {
+      ok: true,
+      outbound: "Profile setup cancelled. You can text Hello Alliance later to begin again.",
+    };
+  }
+
+  if (values.status === "paused") {
+    return {
+      ok: true,
+      reason: "profile_setup_paused",
+      outbound: null,
+    };
+  }
+
+  if (values.state === "completed") {
+    return {
+      ok: true,
+      outbound: "Your Alliance profile is already set up. Thank you.",
+    };
+  }
+
+  values.request_count += 1;
+  values.state = "profile_link_sent";
+  values.status = values.request_count >= 3 ? "paused" : "active";
+  values.form_token = values.form_token || await profileFormToken(values.phone);
+  values.form_url = `${profileFormBaseUrl}/${encodeURIComponent(values.form_token)}`;
+
+  if (values.request_count >= 3) {
+    return {
+      ok: true,
+      outbound: [
+        "This number is paused from receiving more Alliance profile prompts until setup is complete.",
+        "Please click the link below to complete your profile and authorize us to message you.",
+        values.form_url,
+        "Thank you.",
+      ].join("\n"),
+    };
+  }
+
+  if (values.request_count === 2) {
+    return {
+      ok: true,
+      outbound: [
+        "Please complete your Alliance profile to gain access.",
+        "Your phone number is already attached to this secure form and cannot be changed there.",
+        values.form_url,
+      ].join("\n"),
+    };
+  }
+
+  return {
+    ok: true,
+    outbound: [
+      "Hi, got your message. Please register here so your message can be passed on to the admin.",
+      values.form_url,
+    ].join("\n"),
+  };
+}
+
+function isCompletedProfileContext(context: Record<string, unknown> | null) {
+  if (!context) return false;
+  const values = (context.values || {}) as ProfileContextValues;
+  return values.state === "completed" || values.status === "completed" || Boolean(values.profile_id || values.profile);
+}
+
+function isResetCommand(value: string) {
+  return /^reset$/i.test(String(value || "").trim());
+}
+
+function cleanName(value: unknown) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function validateName(value: string, label: string): { ok: true; value: string } | { ok: false; message: string } {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ");
+  if (!normalized) return { ok: false, message: `Please send your ${label}.` };
+  if (normalized.length > 80) return { ok: false, message: `That ${label} is too long. Please send a shorter ${label}.` };
+  if (!/^[A-Za-z][A-Za-z '\-]*$/.test(normalized)) {
+    return { ok: false, message: `Please send only your ${label}. Letters, spaces, apostrophes, and hyphens are okay.` };
+  }
+  return { ok: true, value: normalized };
+}
+
+function profileId(phone: string) {
+  return `user-${onlyDigits(phone).slice(-4)}-${crypto.randomUUID().slice(0, 8)}`;
+}
+
+async function createProfileToken(claims: Record<string, unknown>, secret: string) {
+  const payload = base64UrlEncode(JSON.stringify(claims));
+  const signature = await hmacSha256(payload, secret);
+  return `v1.${payload}.${base64UrlEncode(signature)}`;
+}
+
+async function profileFormToken(phone: string) {
+  return createProfileToken({ p: onlyDigits(phone), iat: Date.now() }, profileFormSecret);
+}
+
+function base64UrlEncode(value: string | ArrayBuffer) {
+  const bytes = typeof value === "string" ? new TextEncoder().encode(value) : new Uint8Array(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function hmacSha256(value: string, secret: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+}
+
+async function rest(path: string, init: { method?: string; body?: Record<string, unknown> } = {}) {
+  const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1${path}`, {
+    method: init.method || "GET",
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: init.body ? JSON.stringify(init.body) : undefined,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || data?.error || "supabase_rest_failed");
+  return data;
+}
+
+function authorized(req: Request) {
+  return Boolean(relayToken && req.headers.get("x-dispatcher-token") === relayToken);
+}
+
+function routePath(pathname: string) {
+  const marker = "/alliance-sms-relay";
+  const index = pathname.indexOf(marker);
+  return index >= 0 ? pathname.slice(index + marker.length) || "/" : pathname;
+}
+
+function required(value: unknown, name: string) {
+  if (!value) throw new Error(`missing_${name}`);
+  return String(value);
+}
+
+function onlyDigits(value: string) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function trimSlash(value: string) {
+  return String(value || "").replace(/\/$/, "");
+}
+
+function isBridgeSelfPhone(from: string) {
+  if (!bridgePhoneNumber) return false;
+  const fromDigits = onlyDigits(from);
+  return fromDigits === bridgePhoneNumber || fromDigits.endsWith(bridgePhoneNumber) || bridgePhoneNumber.endsWith(fromDigits);
+}
+
+type ProfileContextValues = {
+  phone: string;
+  script_id: string;
+  state: string;
+  status: string;
+  collected_values: Record<string, string | null>;
+  request_count?: number;
+  form_token?: string;
+  form_url?: string;
+  events?: Array<Record<string, unknown>>;
+  profile?: Record<string, unknown>;
+  profile_id?: string;
+  edit_form_token?: string | null;
+  edit_form_token_expires_at?: string | null;
+  edit_form_token_used_at?: string | null;
+  edit_requested_at?: string;
+  reset_at?: string;
+};
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
