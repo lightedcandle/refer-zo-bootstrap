@@ -1,0 +1,21 @@
+{
+  "schema": "refer.alliance.phase3-status.v1",
+  "generated_at": "2026-05-01T05:15:42.901Z",
+  "phase": "phase3",
+  "source_contract": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\phase2-data-contract.json",
+  "generated_app_present": true,
+  "phase3_site_forms_present": true,
+  "persistence_behavior": "browser_session_local_drafts",
+  "auth_behavior": "phase5_deferred",
+  "counts": {
+    "entities": 9,
+    "routes": 9,
+    "local_datasets": 9
+  },
+  "evidence": [
+    "phase2_contract:present",
+    "phase3_site_forms:present",
+    "local_draft_action:present",
+    "supabase:not_required_for_phase3"
+  ]
+}

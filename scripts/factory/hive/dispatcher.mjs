@@ -1,11 +1,12 @@
 #!/usr/bin/env node
+/**
  * @opcodes ['FETCH_CHUNKS', 'VALIDATE_PAYLOAD', 'DISPATCH_TO_ZO']
  * @trigger dispatch chunks
  * @description Pulls pending chunks from a cell and dispatches them for execution
  * @forge-type orchestrator
  * @forge-name Hive Dispatcher
  * @forge-id hive-dispatcher
-/**
+ *
  * dispatcher.mjs — Hive Factory Dispatcher
  *
  * Packages and ships refer-zo-bootstrap to downstream nodes.
@@ -18,15 +19,17 @@
  *   node dispatcher.mjs ship --node <id>         # ship pending dispatches
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, cpSync, rmSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, cpSync, rmSync, readdirSync, statSync } from "node:fs";
+import { join, dirname, relative } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = join(__dirname, "..", "..");
+const REPO_ROOT = join(__dirname, "..", "..", "..");
 const DISPATCH_DIR = join(REPO_ROOT, "datasets", "hive-factory-dispatch");
-const TEMP_DIR = join(__dirname, "tmp-dispatch");
+const TEMP_DIR = join(tmpdir(), `refer-zo-bootstrap-dispatch-${process.pid}`);
 const PKG_DIR = join(__dirname, "packages");
 
 const PRIVATE_HIVE_FILES = [
@@ -46,7 +49,6 @@ const HIVE_STRIP_PATTERNS = [
   "datasets/node-identity",
   "scripts/factory/tools",           // factory build tools
   "scripts/factory/artifacts",        // factory dev artifacts
-  "scripts/factory/scriptionary.json", // local dict
 ];
 
 const CELL_STRIP_PATTERNS = [
@@ -55,7 +57,6 @@ const CELL_STRIP_PATTERNS = [
   "scripts/factory/factory.mjs",     // factory CLI (not needed in cell)
   "scripts/factory/tools",
   "scripts/factory/artifacts",
-  "scripts/factory/scriptionary.json",
   "datasets/node-identity",
   "datasets/hive-factory-dispatch",
   "datasets/request-watchdog",
@@ -78,7 +79,22 @@ function loadDispatchLog() {
 }
 
 function shouldStrip(path, patterns) {
-  return patterns.some(p => path.includes(p));
+  const normalized = path.replace(/\\/g, "/");
+  return patterns.some(p => normalized.includes(p));
+}
+
+function listFiles(dir, out = []) {
+  if (!existsSync(dir)) return out;
+  for (const entry of readdirSync(dir)) {
+    const path = join(dir, entry);
+    const rel = relative(REPO_ROOT, path).replace(/\\/g, "/");
+    if (rel === ".git" || rel.startsWith(".git/") || rel === "node_modules" || rel.startsWith("node_modules/")) continue;
+    if (rel.includes("scripts/factory/hive/packages/")) continue;
+    const stat = statSync(path);
+    if (stat.isDirectory()) listFiles(path, out);
+    else if (stat.isFile()) out.push(path);
+  }
+  return out;
 }
 
 async function buildPackage(type) {
@@ -93,15 +109,24 @@ async function buildPackage(type) {
   mkdirSync(PKG_DIR, { recursive: true });
 
   // Copy repo, stripping private files
-  const { execSync } = await import("node:child_process");
-  execSync(`cp -r "${REPO_ROOT}/." "${TEMP_DIR}/refer-zo-bootstrap/"`, { encoding: "utf8" });
+  const stagedRoot = join(TEMP_DIR, "refer-zo-bootstrap");
+  cpSync(REPO_ROOT, stagedRoot, {
+    recursive: true,
+    filter: (src) => {
+      const rel = relative(REPO_ROOT, src).replace(/\\/g, "/");
+      if (!rel) return true;
+      if (rel === ".git" || rel.startsWith(".git/")) return false;
+      if (rel === "node_modules" || rel.startsWith("node_modules/")) return false;
+      if (rel.startsWith("scripts/factory/hive/packages/")) return false;
+      return true;
+    },
+  });
 
   // Remove stripped files
-  const allFiles = execSync(`find "${TEMP_DIR}/refer-zo-bootstrap" -type f`, { encoding: "utf8" })
-    .split("\n").filter(Boolean);
+  const allFiles = listFiles(stagedRoot);
 
   for (const file of allFiles) {
-    const rel = file.replace(`${TEMP_DIR}/refer-zo-bootstrap/`, "");
+    const rel = relative(stagedRoot, file).replace(/\\/g, "/");
     if (shouldStrip(rel, stripPatterns)) {
       rmSync(file, { force: true });
     }
@@ -115,11 +140,11 @@ async function buildPackage(type) {
     source_node: "hive-factory",
     stripped: stripPatterns,
   };
-  writeFileSync(join(TEMP_DIR, "refer-zo-bootstrap", ".dispatch-manifest.json"), JSON.stringify(manifest, null, 2));
+  writeFileSync(join(stagedRoot, ".dispatch-manifest.json"), JSON.stringify(manifest, null, 2));
 
   // Tar it
-  const tarPath = `${TEMP_DIR}/${outName}.tar.gz`;
-  execSync(`cd "${TEMP_DIR}" && tar -czf "${outName}.tar.gz" refer-zo-bootstrap/ && mv "${outName}.tar.gz" "${PKG_DIR}/"`, { encoding: "utf8" });
+  const tarPath = join(PKG_DIR, `${outName}.tar.gz`);
+  execFileSync("tar", ["-czf", tarPath, "-C", TEMP_DIR, "refer-zo-bootstrap"], { encoding: "utf8" });
 
   const cs = checksum(`${PKG_DIR}/${outName}.tar.gz`);
   const entry = {

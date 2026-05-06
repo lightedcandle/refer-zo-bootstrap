@@ -15,6 +15,7 @@ const profileFormSecret = Deno.env.get("ALLIANCE_PROFILE_FORM_SECRET") || relayT
 const bridgePhoneNumber = onlyDigits(Deno.env.get("ALLIANCE_BRIDGE_PHONE_NUMBER") || "");
 const unknownIntentReply = "I'm not sure about that one yet. You can find a full guide on how to use the Alliance Hub here:\nhttps://alliance.telechurchlive.com/help";
 const sectionStubReply = "Ok, we're still working on that section. We'll let you know once it is ready.";
+const eventsApiUrl = trimSlash(Deno.env.get("ALLIANCE_EVENTS_API_URL") || `${hubBaseUrl}/api/events?canonical=true`);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
@@ -198,6 +199,8 @@ async function advanceProfileIntake(from: string, inboundBody: string) {
   const phone = onlyDigits(from);
   const inbound = String(inboundBody || "").trim();
   const existing = await latestProfileContext(phone);
+  const publicRoute = await routePublicSmsIntent(phone, inbound);
+  if (publicRoute) return publicRoute;
   if (isResetCommand(inbound)) {
     return resetProfileIntake(phone, existing);
   }
@@ -270,6 +273,8 @@ async function routeRegisteredSmsIntent(phone: string, inbound: string, context:
   const values = (context.values || {}) as ProfileContextValues;
   const profile = (values.profile || {}) as Record<string, unknown>;
   const firstName = cleanName(profile.first_name) || "there";
+  const eventRoute = await routeEventsIntent(phone, inbound, normalized);
+  if (eventRoute) return eventRoute;
 
   if (isGreetingIntent(normalized)) {
     const message = [
@@ -538,6 +543,115 @@ function stubIntent(normalized: string) {
     return { section: "next_event", script_id: "alliance.next_event.question.v1" };
   }
   return null;
+}
+
+function isEventIntent(normalized: string) {
+  return /\b(events?|calendar|service|services|upcoming|next event|next service|what is happening|what's happening|meeting|gathering|schedule)\b/.test(normalized);
+}
+
+async function fetchUpcomingEvents(limit = 3) {
+  try {
+    const response = await fetch(eventsApiUrl);
+    if (!response.ok) {
+      return { ok: false, events: [], source: `events_api_http_${response.status}` };
+    }
+    const body = await response.json().catch(() => null);
+    const rows = Array.isArray(body?.events) ? body.events : [];
+    const events = rows
+      .filter((event) => String(event?.event_status || "active").toLowerCase() !== "cancelled")
+      .filter((event) => {
+        const start = parseEventTime(event?.event_start_time || event?.date || event?.startDate);
+        return !start || start.getTime() > Date.now();
+      })
+      .sort((left, right) => {
+        const leftTime = parseEventTime(left?.event_start_time || left?.date || left?.startDate).getTime() || 0;
+        const rightTime = parseEventTime(right?.event_start_time || right?.date || right?.startDate).getTime() || 0;
+        return leftTime - rightTime;
+      })
+      .slice(0, Math.max(1, Math.min(Number(limit) || 3, 5)));
+    return { ok: true, events, source: body?.shape || "canonical" };
+  } catch (_error) {
+    return { ok: false, events: [], source: "events_api_failed" };
+  }
+}
+
+function formatEventReply(events: Array<Record<string, unknown>>) {
+  const safeEvents = Array.isArray(events) ? events.slice(0, 3) : [];
+  if (!safeEvents.length) {
+    return [
+      "I couldn't find upcoming events right now.",
+      `Calendar: ${hubBaseUrl}/calendar`,
+    ].join("\n");
+  }
+
+  const lines = ["Upcoming events:"];
+  for (const event of safeEvents) {
+    const title = String(event.event_title || event.title || "Upcoming event");
+    const date = formatEventDate(event.event_start_time || event.date || event.startDate);
+    const location = String(event.event_location || event.location || "").trim();
+    const link = String(event.event_public_url || `${hubBaseUrl}/calendar`);
+    const summary = [date, location].filter(Boolean).join(" · ");
+    lines.push(summary ? `${title}\n${summary}\n${link}` : `${title}\n${link}`);
+  }
+  lines.push(`Calendar: ${hubBaseUrl}/calendar`);
+  return lines.join("\n");
+}
+
+function formatEventDate(value: unknown) {
+  if (!value) return "";
+  const date = parseEventTime(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function parseEventTime(value: unknown) {
+  if (!value) return new Date(NaN);
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return new Date(`${raw}T00:00:00`);
+  }
+  return new Date(raw);
+}
+
+async function routePublicSmsIntent(phone: string, inbound: string) {
+  const normalized = normalizeSmsIntentText(inbound);
+  return routeEventsIntent(phone, inbound, normalized);
+}
+
+async function routeEventsIntent(phone: string, inbound: string, normalized?: string) {
+  const clean = normalized || normalizeSmsIntentText(inbound);
+  if (!isEventIntent(clean)) return null;
+
+  const upcoming = await fetchUpcomingEvents();
+  const message = formatEventReply(upcoming.events);
+  const delivery = await queueSms(phone, message, {
+    source: "alliance_sms_events",
+    script_id: "alliance.events.section.v1",
+    router_script_id: "alliance.sms_router.v1",
+    event_count: upcoming.events.length,
+    event_source: upcoming.source,
+  });
+  await recordSmsRouteDecision(phone, inbound, {
+    script_id: "alliance.events.section.v1",
+    normalized_body: clean,
+    response: message,
+    event_count: upcoming.events.length,
+    event_source: upcoming.source,
+  });
+  return {
+    ok: true,
+    routed: true,
+    reason: "events_intent",
+    script_id: "alliance.events.section.v1",
+    router_script_id: "alliance.sms_router.v1",
+    outbound: message,
+    delivery,
+  };
 }
 
 function suggestSmsScriptId(normalized: string) {

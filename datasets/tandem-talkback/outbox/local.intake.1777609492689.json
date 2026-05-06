@@ -1,0 +1,89 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777609492689",
+  "status": "done",
+  "prompt": "Continue Alliance Sites Phase 1 with public operational hub pages, no auth behavior, and auth-later page notes",
+  "created_at": "2026-05-01T04:24:52.689Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-05-01T04:24:52.592Z",
+    "mode": "auto_matched",
+    "matched": [
+      {
+        "scope_id": "alliance-application-build",
+        "label": "Alliance application build",
+        "status": "active",
+        "confidence": 0.8,
+        "score": 4,
+        "categories": [
+          "alliance-hub",
+          "zo-space-routes",
+          "governed-build-intake"
+        ]
+      }
+    ],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 27
+  },
+  "matched_script": {
+    "id": "assess-alliance-sites-restart-against",
+    "name": "Assess Alliance Sites Restart Against",
+    "type": "forge",
+    "description": "Auto-promoted forge for intent: Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites",
+    "trigger_intents": [
+      "assess",
+      "alliance",
+      "sites",
+      "restart",
+      "against",
+      "phase",
+      "assess alliance sites restart against phase 1 and identify protocol gaps after moving alliance to sites"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scripts/factory/artifacts/assess-alliance-sites-restart-against.mjs",
+    "version": "0.1.0",
+    "raw": {
+      "id": "assess-alliance-sites-restart-against",
+      "name": "Assess Alliance Sites Restart Against",
+      "type": "forge",
+      "description": "Auto-promoted forge for intent: Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites",
+      "trigger_intents": [
+        "assess",
+        "alliance",
+        "sites",
+        "restart",
+        "against",
+        "phase",
+        "assess alliance sites restart against phase 1 and identify protocol gaps after moving alliance to sites"
+      ],
+      "status": "active",
+      "version": "0.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/assess-alliance-sites-restart-against.mjs",
+      "auto_promoted": true,
+      "promoted_from_gap": "assess-alliance-sites-restart-against",
+      "build_trace_schema": "refer.zo.build-trace.v1"
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scripts\\factory\\artifacts\\assess-alliance-sites-restart-against.mjs",
+    "output": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"script_id\": \"assess-alliance-sites-restart-against\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\assess-alliance-sites-restart-against.b2b5be54707deb09.json\",\n  \"record\": {\n    \"schema\": \"refer.zo.script-artifact.v1\",\n    \"id\": \"assess-alliance-sites-restart-against.b2b5be54707deb09\",\n    \"script_id\": \"assess-alliance-sites-restart-against\",\n    \"draft_id\": \"assess-alliance-sites-restart-against\",\n    \"created_at\": \"2026-05-01T04:24:52.671Z\",\n    \"status\": \"done\",\n    \"prompt\": \"Continue Alliance Sites Phase 1 with public operational hub pages, no auth behavior, and auth-later page notes\",\n    \"trigger_intents\": [\n      \"assess\",\n      \"alliance\",\n      \"sites\",\n      \"restart\",\n      \"against\",\n      \"phase\"\n    ],\n    \"output_kind\": \"canonical_intent_artifact\",\n    \"deterministic_key\": \"aacf29397d592a7f5b14b0b3d2fa4040369098a9fd6aa7fa99d2d9a80ca5b8f5\",\n    \"summary\": \"Continue Alliance Sites Phase 1 with public operational hub pages, no auth behavior, and auth-later page notes\",\n    \"contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"prompt\": \"Continue Alliance Sites Phase 1 with public operational hub pages, no auth behavior, and auth-later page notes\",\n      \"script_id\": \"assess-alliance-sites-restart-against\",\n      \"created_at\": \"2026-05-01T04:24:52.599Z\"\n    },\n    \"next\": \"Use this artifact as the deterministic output for this intent class or replace this forge with a richer implementation after a successful build trace.\"\n  }\n}\n"
+  },
+  "script_gap": null,
+  "promotion": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:auto_resolved",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}

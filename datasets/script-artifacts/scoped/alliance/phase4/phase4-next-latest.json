@@ -1,0 +1,14 @@
+{
+  "schema": "refer.alliance.phase4-next.v1",
+  "generated_at": "2026-05-01T05:21:42.957Z",
+  "phase": "phase4",
+  "rule": "Keep Phase 4 as client-side view routing. Do not add auth or persistence here.",
+  "next_actions": [],
+  "gaps": [],
+  "ready_for_next_phase": true,
+  "next_phase": "Prove Zo Dataset write capability or choose Supabase for persistent private records.",
+  "evidence": [
+    "app:checked",
+    "phase4_routing:minima_met"
+  ]
+}

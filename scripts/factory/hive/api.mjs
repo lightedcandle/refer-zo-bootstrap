@@ -21,7 +21,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const HIVE_ROOT = join(__dirname, "..", "..");
+const HIVE_ROOT = join(__dirname, "..", "..", "..");
 const MANIFEST_PATH = join(HIVE_ROOT, "scripts", "factory", "hive", "manifest.json");
 const NODES_PATH = join(HIVE_ROOT, "scripts", "factory", "hive", "nodes.json");
 const EVENT_LOG = join(HIVE_ROOT, "scripts", "factory", "hive", "hive-events.jsonl");

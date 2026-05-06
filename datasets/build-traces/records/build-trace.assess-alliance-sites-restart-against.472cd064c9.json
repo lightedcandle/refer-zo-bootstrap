@@ -1,0 +1,63 @@
+{
+  "schema": "refer.zo.build-trace.v1",
+  "id": "build-trace.assess-alliance-sites-restart-against.472cd064c9",
+  "intent_id": "assess-alliance-sites-restart-against",
+  "script_gap_id": "assess-alliance-sites-restart-against",
+  "prompt": "Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites",
+  "target_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-05-01T04:22:18.310Z",
+    "mode": "auto_matched",
+    "matched": [
+      {
+        "scope_id": "alliance-application-build",
+        "label": "Alliance application build",
+        "status": "active",
+        "confidence": 0.8,
+        "score": 4,
+        "categories": [
+          "alliance-hub",
+          "zo-space-routes",
+          "governed-build-intake"
+        ]
+      }
+    ],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "started_at": "2026-05-01T04:22:18.386Z",
+  "status": "ratified",
+  "changed": [
+    {
+      "path": "scripts/factory/artifacts/assess-alliance-sites-restart-against.mjs",
+      "action": "created_or_rewritten"
+    },
+    {
+      "path": "scripts/factory/script-registry.json",
+      "action": "created"
+    }
+  ],
+  "errors": [],
+  "fixes": [],
+  "checks": [
+    {
+      "id": "script_replay",
+      "ok": true,
+      "detail": "generated script replayed from draft prompt"
+    }
+  ],
+  "distilled_script": {
+    "id": "assess-alliance-sites-restart-against",
+    "script_file": "scripts/factory/artifacts/assess-alliance-sites-restart-against.mjs",
+    "registry_file": "scripts/factory/script-registry.json"
+  },
+  "replay": {
+    "ok": true,
+    "stdout": "{\n  \"ok\": true,\n  \"status\": \"done\",\n  \"script_id\": \"assess-alliance-sites-restart-against\",\n  \"artifact_path\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\records\\\\assess-alliance-sites-restart-against.f7858f5d8250ff3c.json\",\n  \"record\": {\n    \"schema\": \"refer.zo.script-artifact.v1\",\n    \"id\": \"assess-alliance-sites-restart-against.f7858f5d8250ff3c\",\n    \"script_id\": \"assess-alliance-sites-restart-against\",\n    \"draft_id\": \"assess-alliance-sites-restart-against\",\n    \"created_at\": \"2026-05-01T04:22:18.460Z\",\n    \"status\": \"done\",\n    \"prompt\": \"Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites\",\n    \"trigger_intents\": [\n      \"assess\",\n      \"alliance\",\n      \"sites\",\n      \"restart\",\n      \"against\",\n      \"phase\"\n    ],\n    \"output_kind\": \"canonical_intent_artifact\",\n    \"deterministic_key\": \"b06e04b70cc99bbb56d84a1cca6c4e58e0c2133672e82ce4fbf3e639eb6a2b13\",\n    \"summary\": \"Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites\",\n    \"contract\": {\n      \"schema\": \"refer.zo.local-script-contract.v1\",\n      \"prompt\": \"Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites\",\n      \"script_id\": \"assess-alliance-sites-restart-against\",\n      \"created_at\": \"2026-05-01T04:22:18.392Z\",\n      \"replay\": true\n    },\n    \"next\": \"Use this artifact as the deterministic output for this intent class or replace this forge with a richer implementation after a successful build trace.\"\n  }\n}\n"
+  },
+  "talkback": {
+    "status": "done",
+    "next": "rerun_intake_or_reuse_script"
+  },
+  "finished_at": "2026-05-01T04:22:18.480Z"
+}

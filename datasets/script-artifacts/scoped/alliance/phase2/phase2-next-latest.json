@@ -1,0 +1,14 @@
+{
+  "schema": "refer.alliance.phase2-next.v1",
+  "generated_at": "2026-05-01T12:38:43.221Z",
+  "phase": "phase2",
+  "rule": "Supabase is selected only through Edge Functions. Zo must not call Supabase table REST endpoints directly.",
+  "next_actions": [],
+  "gaps": [],
+  "ready_for_next_phase": true,
+  "next_phase": "Generate route-level create/edit mock forms from this contract while writes remain local drafts.",
+  "evidence": [
+    "contract:checked",
+    "phase2_contract:minima_met"
+  ]
+}

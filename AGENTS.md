@@ -134,9 +134,33 @@ Zo chat ratification:
 - Ask for concise accepted/cautions/priority output when ratifying source direction.
 - Do not use Zo chat as a substitute for source control; ratified behavior must still be captured in this repo, verified, committed, and deployed intentionally.
 
+## Telechurchlive Subdomain Focus
+
+When this nested repo is opened from `e:\refer-script-factory`, do not assume Telechurchlive app work belongs here. The current authoritative source for the public `telechurchlive` subdomain is the sibling `..\alliance-hub\` directory unless the user explicitly asks for Zo, bootstrap, hive, Zo Files, Zo personas/rules, dispatch/talkback, or live Zo runtime work.
+
+Default target interpretation from the parent workspace:
+
+- `..\alliance-hub\` owns Telechurchlive profile, admin, roles, church setup, Cloudflare Pages/Functions, and public app behavior.
+- This repo remains a Zo bootstrap/hive reference surface unless the request explicitly names Zo work.
+- Do not use `scopes/alliance/site/` as the default Telechurchlive app source from the parent workspace.
+- Do not connect to, mutate, sync, or deploy any Zo runtime unless the user explicitly asks for Zo.
+
 ## Zo Hive Self-Build Doctrine
 
 The Zo Hive Factory is a seed that becomes portable by ratifying what works on live Zo computers.
+
+Treat the active AI operator as the hive's growth, repair, and execution intelligence. Scripts, datasets, skills, and binders are durable muscles and memory; the AI is the watcher that chooses the right surface, executes or dispatches bounded work, compares intended effects to observed effects, repairs the smallest responsible layer, and records what should become portable capability next time.
+
+The hive does not have to begin perfect. Its purpose is to become increasingly competent by turning live use into ratified source. When a Zo computer, skill, dataset, dispatch packet, persona, or rule is missing what the task needs, the AI should build or patch the missing structure within the approved boundary, verify it, and leave source evidence so the next node can inherit it.
+
+Self-healing and self-expansion are core duties, not optional cleanup:
+
+- self-executing: use existing governed scripts, skills, datasets, and dispatch/talkback lanes when they fit the intent;
+- self-healing: when execution or understanding is blocked, patch the responsible layer rather than treating the script, skill, or node as bad;
+- self-expanding: when a repeatable need is discovered, turn the working trace into a script, dataset schema, skill rule, persona/rule update, verification step, or deployment note;
+- self-recording: preserve talkback, status, registry, and ratification evidence so future nodes inherit the improvement.
+
+Do not convert the AI's role into an endless chain of resolver scripts. The AI performs judgment, repair, and integration. Scripts and skills should remain bounded, deterministic tools that expose structured results and durable artifacts.
 
 Each completed task should leave behind a better bootstrap package: a script, dataset schema, dispatch format, talkback format, heartbeat improvement, persona/rule update, deployment note, or verification step.
 
@@ -177,12 +201,20 @@ Key surfaces:
 
 When adding factory capability, keep the loop deterministic:
 
-1. Add or update the script, packet, dataset, or manifest definition.
-2. Add or update the command/runner if it is executable.
-3. Add status/process events when it runs.
-4. Add or update dataset outputs if it creates artifacts.
-5. Update docs when terms, roles, or deployment expectations change.
-6. Verify with `npm run check` and any narrower runtime/status command available.
+1. If a script already exists, use it.
+2. If no script exists for a valid intent, create a draft/gap record and let the
+   authorized Zo AI lane build the first working solution inside the intent
+   contract.
+3. Record the build trace: intent, changed routes/files/datasets, errors, fixes,
+   checks, and talkback/evidence.
+4. Distill the working trace into a script, packet, dataset, or manifest
+   definition.
+5. Add or update the command/runner if it is executable.
+6. Replay the script from the original intent and verify the output.
+7. Add status/process events when it runs.
+8. Add or update dataset outputs if it creates artifacts.
+9. Update docs when terms, roles, or deployment expectations change.
+10. Verify with `npm run check` and any narrower runtime/status command available.
 
 ## Script Rules
 

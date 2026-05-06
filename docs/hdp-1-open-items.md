@@ -85,10 +85,15 @@ Updated: 2026-04-28 — All files pulled from apostlej. Full Script Factory now 
 - `[RESOLVED]` Timeout watchdog → replaced by auto-chunker. Risky requests detected by pattern, auto-chunked. Director owns tracking. Watchdog dead.
 - `[OPEN]` Out-of-tokens: use `zo-free-tier-platform-limits` skill for workaround
 
-## Data Persistence (without Supabase)
+## Data Persistence
 
-- `[OPEN]` Can Zo Sites expose a public endpoint that updates a Zo Dataset?
-- `[OPEN]` If yes: design HDP-1 storage layer using Zo Datasets
+- `[RESOLVED-PARTIAL]` Zo Sites can expose a public endpoint that writes a sandbox local proof file from the running Hono service. Alliance proof: `scopes/alliance/phase5-persistence-probe.mjs`, remote file `/home/workspace/Projects/Alliance-Hub/alliance/factory/alliance-draft-proof.jsonl`.
+- `[RESOLVED]` Alliance selected Supabase for private persistent records through Supabase Edge Functions only. Zo calls `/functions/v1/alliance-record-write`; the Edge Function writes `public.alliance_records`.
+- `[RESOLVED]` Alliance Supabase Edge proof passed: `scopes/alliance/supabase-probe.mjs` posted through the Zo endpoint, verified `alliance-record-write`, and found the row in Supabase.
+- `[PARTIAL]` Alliance Phase 2 now has a Supabase Edge selected data contract in `scopes/alliance/phase2-data-contract.json`; live Zo Dataset writes remain unproven.
+- `[OPEN]` A first-class Zo Dataset API for Zo Sites is still not visible in Alliance MCP tools.
+- `[OPEN]` If Zo Dataset writes are proven later: design HDP-1 storage layer using Zo Datasets.
+- `[OPEN]` Add auth and role policy on top of the verified Supabase Edge write lane before storing member/church private data.
 
 ## Commits
 
@@ -98,4 +103,4 @@ Updated: 2026-04-28 — All files pulled from apostlej. Full Script Factory now 
 
 ---
 
-Updated: 2026-04-28
+Updated: 2026-05-01

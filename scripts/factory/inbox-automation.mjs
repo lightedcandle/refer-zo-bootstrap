@@ -5,12 +5,16 @@
  * A non-persistent automation tick for Script Factory intake. It scans queued
  * local intake files, runs local-intake-runner for each, and marks processed
  * records without requiring a chat session to perform the routing manually.
+ *
+ * Compression: --compress encodes intake queue files as sx1 transport packets
+ * and passes --compress to the runner so outputs are also sx1-encoded.
  */
 import { existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logTokenUse } from "./token-log-bridge.mjs";
+import { encodePacket } from "./compression-codec.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, "..", "..");
@@ -19,11 +23,12 @@ const PROCESSED = resolve(REPO_ROOT, "datasets", "local-intake", "processed");
 const ERRORS = resolve(REPO_ROOT, "datasets", "local-intake", "errors");
 
 function parseArgs(argv) {
-  const args = { once: false, status: false, json: false, limit: 20 };
+  const args = { once: false, status: false, json: false, limit: 20, compress: false };
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--once") args.once = true;
     else if (argv[i] === "--status") args.status = true;
     else if (argv[i] === "--json") args.json = true;
+    else if (argv[i] === "--compress") args.compress = true;
     else if (argv[i] === "--limit" && argv[i + 1]) args.limit = Number(argv[++i]);
   }
   return args;
@@ -40,6 +45,24 @@ function status() {
   };
 }
 
+function enqueueCompressed(promptText) {
+  const packet = {
+    schema: "refer.zo.local-intake.v1",
+    id: `compressed-intake-${Date.now()}`,
+    created_at: new Date().toISOString(),
+    source: "inbox-automation:sx1",
+    prompt: promptText,
+  };
+  const { payload } = encodePacket("zo_task", packet);
+  const queueFile = join(INBOX, `sx1-${Date.now()}.json`);
+  writeFileSync(
+    queueFile,
+    JSON.stringify({ schema: "refer.zo.inbox-queue.v1", transport: payload }, null, 2),
+    "utf8",
+  );
+  return queueFile;
+}
+
 function runOnce(args) {
   mkdirSync(INBOX, { recursive: true });
   mkdirSync(PROCESSED, { recursive: true });
@@ -52,7 +75,10 @@ function runOnce(args) {
     const path = join(INBOX, file);
     try {
       inputChars += file.length;
-      const output = execFileSync(process.execPath, ["scripts/factory/local-intake-runner.mjs", "--intake", path, "--json"], {
+      const runnerArgs = ["scripts/factory/local-intake-runner.mjs", "--intake", path];
+      if (args.compress) runnerArgs.push("--compress");
+      runnerArgs.push("--json");
+      const output = execFileSync(process.execPath, runnerArgs, {
         cwd: REPO_ROOT,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
@@ -79,6 +105,7 @@ function runOnce(args) {
     ran_at: new Date().toISOString(),
     processed_count: results.filter((result) => result.ok).length,
     error_count: results.filter((result) => !result.ok).length,
+    compression: args.compress ? "sx1" : "none",
     results,
   };
   output.token_log = logTokenUse({
@@ -113,7 +140,7 @@ async function main() {
     return;
   }
   if (!args.once) {
-    console.error("Usage: node scripts/factory/inbox-automation.mjs --once [--json] or --status");
+    console.error("Usage: node scripts/factory/inbox-automation.mjs --once [--json] [--compress] or --status");
     process.exit(2);
   }
   print(runOnce(args), args.json);

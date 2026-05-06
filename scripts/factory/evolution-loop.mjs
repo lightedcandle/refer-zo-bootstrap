@@ -30,6 +30,7 @@ function parseArgs(argv) {
 function runTick(args) {
   const startedAt = Date.now();
   const automation = runNode(["scripts/factory/inbox-automation.mjs", "--once", "--json"]);
+  const promotion = runNode(["scripts/factory/draft-promotion-runner.mjs", "--all", "--limit", "10", "--json"]);
   const registry = runNode([
     "scripts/factory/registry-doctor.mjs",
     ...(args.repairRegistry ? ["--repair"] : []),
@@ -43,17 +44,19 @@ function runTick(args) {
     source: "evolution-loop.mjs",
     origin: process.env.ZO_COMPUTER_NAME || "local",
     mode: "evolve",
-    outcome: automation.ok && registry.ok ? "EVOLVED" : "RETRY_PENDING",
+    outcome: automation.ok && promotion.ok && registry.ok ? "EVOLVED" : "RETRY_PENDING",
     ran_at: new Date(startedAt).toISOString(),
     finished_at: new Date().toISOString(),
     duration_ms: Date.now() - startedAt,
     intake_processed: automation.output?.processed_count || 0,
     intake_errors: automation.output?.error_count || 0,
+    draft_promoted_count: promotion.output?.promoted_count || 0,
+    draft_promotion_blocked_count: promotion.output?.blocked_count || 0,
     registry_missing_executable_count: registry.output?.report?.missing_executable_count || 0,
     registry_repaired_count: registry.output?.report?.repaired_count || 0,
     script_draft_count: draftCount,
     can_retry: true,
-    notes: "Evolution tick processed local intake, audited script registry, and recorded talkback.",
+    notes: "Evolution tick processed local intake, audited script registry, and recorded draft promotion candidates for AI build-to-script canonicalization.",
   };
   const eventPath = writeEvolutionEvent(event);
   const talkback = {
@@ -63,15 +66,17 @@ function runTick(args) {
     created_at: event.finished_at,
     event_path: eventPath,
     automation: summarizeCommand(automation),
+    promotion: summarizeCommand(promotion),
     registry: summarizeCommand(registry),
     draft_count: draftCount,
     evidence: [
       "evolution_loop:ran",
       automation.ok ? "local_intake_automation:ok" : "local_intake_automation:blocked",
+      promotion.ok ? "draft_promotion:ok" : "draft_promotion:blocked",
       registry.ok ? "registry_doctor:ok" : "registry_doctor:blocked",
       draftCount ? "script_gap_drafts:present" : "script_gap_drafts:none",
     ],
-    next: draftCount ? "implement_or_promote_script_drafts" : "continue_monitoring",
+    next: draftCount ? "ai_build_trace_then_distill_script_drafts" : "continue_monitoring",
   };
   const talkbackPath = writeTalkback(talkback);
   const output = { ok: talkback.status === "done", event_path: eventPath, talkback_path: talkbackPath, event, talkback };

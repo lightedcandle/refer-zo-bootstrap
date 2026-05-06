@@ -1,0 +1,60 @@
+{
+  "schema": "refer.zo.phase3-route-bridge.v1",
+  "created_at": "2026-05-01T02:50:58.147Z",
+  "instance": "alliance",
+  "dry_run": false,
+  "results": [
+    {
+      "route": "/dashboard/organizations",
+      "entity": "Organization",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/people",
+      "entity": "Person",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/calendar",
+      "entity": "Event",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/initiatives",
+      "entity": "Initiative",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/documents",
+      "entity": "Document",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/governance",
+      "entity": "GovernanceItem",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/compliance",
+      "entity": "ComplianceTask",
+      "changed": true,
+      "public": false
+    },
+    {
+      "route": "/dashboard/communications",
+      "entity": "Communication",
+      "changed": true,
+      "public": false
+    }
+  ],
+  "evidence": [
+    "phase3_batch:manifest_read",
+    "route_write:applied"
+  ]
+}

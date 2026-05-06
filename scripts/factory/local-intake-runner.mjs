@@ -5,12 +5,16 @@
  * Converts a normal local prompt into a scoped Script Factory intake result:
  * scope resolution, registry match, bounded script execution if present, or a
  * durable script-gap draft when the factory does not yet know the work.
+ *
+ * Compression: --compress encodes the JSON output as an sx1 transport packet
+ * and decodes sx1-encoded intake files from the inbox.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logTokenUse } from "./token-log-bridge.mjs";
+import { encodePacket, decodePacket } from "./compression-codec.mjs";
 import { loadRegistry, matchScript, saveNormalizedRegistry, scaffoldScriptGap } from "./local-script-registry.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -26,12 +30,14 @@ function parseArgs(argv) {
     zoComputer: process.env.ZO_COMPUTER_NAME || "",
     json: false,
     execute: true,
+    compress: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--prompt" && argv[i + 1]) args.prompt = argv[++i];
     else if (argv[i] === "--intake" && argv[i + 1]) args.intake = argv[++i];
     else if (argv[i] === "--remote-root" && argv[i + 1]) args.remoteRoot = argv[++i];
     else if (argv[i] === "--zo-computer" && argv[i + 1]) args.zoComputer = argv[++i];
+    else if (argv[i] === "--compress") args.compress = true;
     else if (argv[i] === "--json") args.json = true;
     else if (argv[i] === "--no-execute") args.execute = false;
   }
@@ -40,7 +46,17 @@ function parseArgs(argv) {
 
 function loadPrompt(args) {
   if (args.intake) {
-    const record = JSON.parse(readFileSync(args.intake, "utf8"));
+    const raw = readFileSync(args.intake, "utf8");
+    let record;
+    try {
+      record = JSON.parse(raw);
+    } catch {
+      throw new Error(`Invalid JSON in intake file: ${args.intake}`);
+    }
+    if (record.transport && typeof record.transport === "string" && record.transport.startsWith("sx1:")) {
+      const { packet } = decodePacket(record.transport);
+      record = packet;
+    }
     return {
       intake_record: record,
       prompt: record.prompt || record.request || record.summary || JSON.stringify(record),
@@ -63,6 +79,7 @@ function runIntake(args) {
 
   let execution = null;
   let scriptGap = null;
+  let promotion = null;
   const evidence = [
     "local_intake:recorded",
     scopeResolution.matched.length ? "node_scope:auto_resolved" : "node_scope:no_match",
@@ -86,9 +103,23 @@ function runIntake(args) {
       writeFileSync(scriptGap.draft_path, `${JSON.stringify(scriptGap.draft, null, 2)}\n`, "utf8");
     }
     evidence.push("script_scaffold:created");
+    promotion = promoteDraft(scriptGap.draft_path, args);
+    evidence.push(promotion.ok ? "script_gap:auto_promoted" : "script_gap:promotion_blocked");
+    if (promotion.ok) {
+      execution = {
+        ok: true,
+        executed: true,
+        status: "done",
+        promoted_script: promotion.script_id,
+        script_file: promotion.script_file,
+        build_trace_path: promotion.build_trace_path,
+        replay: promotion.replay,
+      };
+      evidence.push("script_replay:passed");
+    }
   }
 
-  const status = scriptGap ? "needs_script" : execution?.ok ? "done" : "blocked";
+  const status = execution?.ok ? "done" : scriptGap ? "needs_script" : "blocked";
   const talkback = {
     schema: "refer.zo.local-intake-talkback.v1",
     id: `local.intake.${Date.now()}`,
@@ -109,9 +140,10 @@ function runIntake(args) {
           artifact_path: scriptGap.artifact_path,
         }
       : null,
+    promotion,
     evidence,
-    next: scriptGap
-      ? "implement_script_gap"
+    next: scriptGap && !promotion?.ok
+      ? "ai_build_trace_then_distill_script"
       : status === "done"
         ? "record_or_ratify_result"
         : "resolve_execution_blocker",
@@ -134,6 +166,37 @@ function runIntake(args) {
     note: "local prompt converted to scoped script-factory intake",
   });
   return output;
+}
+
+function promoteDraft(draftPath, args) {
+  if (!args.execute) return { ok: false, skipped: true, reason: "no_execute" };
+  try {
+    const output = execFileSync(
+      process.execPath,
+      ["scripts/factory/draft-promotion-runner.mjs", "--draft", draftPath, "--json"],
+      {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 90000,
+      },
+    );
+    const parsed = JSON.parse(output);
+    const first = parsed.results?.[0] || null;
+    return {
+      ok: Boolean(parsed.ok && first?.ok),
+      result: parsed,
+      script_id: first?.script_id,
+      script_file: first?.script_file,
+      build_trace_path: first?.build_trace_path,
+      replay: first?.replay,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.stderr?.toString?.().slice(0, 12000) || error?.message || String(error),
+    };
+  }
 }
 
 function maybeRunScript(record, prompt, args) {
@@ -309,8 +372,12 @@ function isSensitiveName(name) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const output = runIntake(args);
-  if (args.json) console.log(JSON.stringify(output, null, 2));
-  else console.log(JSON.stringify(output, null, 2));
+  if (args.compress) {
+    const encoded = encodePacket("zo_task", output);
+    console.log(JSON.stringify(encoded, null, 2));
+  } else {
+    console.log(JSON.stringify(output, null, 2));
+  }
 }
 
 main().catch((error) => {

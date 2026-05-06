@@ -1,219 +1,349 @@
 {
-  "0": "{\"Forge\":{\"plain_english\":\"Conversion Unit\",\"meaning\":\"One bounded unit that turns defined inputs into defined outputs.\",\"rule\":\"Use Forge for a repeatable conversion unit. Do not use Factory when only one conversion unit is meant.\"},\"Factory\":{\"plain_english\":\"Governed Forge Domain\",\"meaning\":\"A governance domain that coordinates multiple forges or manages governance around them.\",\"rule\":\"Use Factory when the domain owns multiple forges; use Forge for one bounded conversion unit.\"},\"Factory System\":{\"plain_english\":\"Coordinated Factory Network\",\"meaning\":\"The complete network of factories across domains.\",\"rule\":\"Use for the whole body of coordinated factories.\"},\"Script Factory\":{\"plain_english\":\"Script Governance System\",\"meaning\":\"The workspace and governance layer that creates, manages, and runs script forges.\",\"rule\":\"Use for the whole script governance system.\"},\"Script Legend\":{\"plain_english\":\"Deterministic Terminology\",\"meaning\":\"Governed vocabulary and rules for script relationships and status.\",\"rule\":\"Script Legend is authoritative when terms conflict.\"},\"Script Map\":{\"plain_english\":\"Script Relationship Map\",\"meaning\":\"A map of how scripts connect, call each other, and move data.\",\"rule\":\"Use to answer what calls what, what feeds what.\"},\"Scriptionary\":{\"plain_english\":\"Script Dictionary\",\"meaning\":\"Definitions of script terms and vocabulary.\",\"rule\":\"Use to explain words; do not use as the relationship map.\"},\"Scriptographer\":{\"plain_english\":\"Script Cartographer\",\"meaning\":\"The scanner/builder that maintains script maps and definitions.\",\"rule\":\"Use for the tool or process that creates maps and definitions.\"},\"Scriptonomy\":{\"plain_english\":\"Script Taxonomy\",\"meaning\":\"The classification blueprint for script kinds, surfaces, points, and status rules.\",\"rule\":\"Use for allowed categories and validation rules.\"},\"Context Picker\":{\"plain_english\":\"Context Pack Builder\",\"meaning\":\"The script that selects relevant assets for a prompt-specific model package.\",\"rule\":\"Use to build compact context packs instead of sending the whole repo.\"},\"Train Car\":{\"plain_english\":\"Train Car\",\"meaning\":\"A script in train-cars/ that runs on every heartbeat tick. Receives state, returns updated state and a continue flag.\",\"rule\":\"Use for segmented, independently swappable tick units. Each car should do one focused task.\"},\"Heartbeat\":{\"plain_english\":\"Heartbeat Train\",\"meaning\":\"Periodic orchestrator that runs train cars on a fixed interval. Lives in heartbeat.mjs.\",\"rule\":\"Use as the steady tick engine. Cars must export run(state) or { run }. Heartbeat owns the tick loop, not the cars.\"},\"Chunk Session\":{\"plain_english\":\"Chunk Session\",\"meaning\":\"A group of contract rows sharing the same session_id, created when a prompt is auto-chunked into multiple pieces.\",\"rule\":\"Use session_id to correlate all chunks of one prompt. A session with 1 chunk means no chunking occurred.\"},\"Chat Contracts\":{\"plain_english\":\"Chat Contracts Ledger\",\"meaning\":\"DuckDB dataset that logs every intake contract, chunk session, and routing decision made by compress-prompt.mjs.\",\"rule\":\"Use for audit trail and routing analytics. Not for cross-referencing live execution state.\"},\"Chat Logs\":{\"plain_english\":\"Chat Logs Ledger\",\"meaning\":\"DuckDB dataset that logs every heartbeat tick and what each train car did.\",\"rule\":\"Use for heartbeat health monitoring and car performance tracking.\"},\"Hive Factory Dispatch\":{\"plain_english\":\"Dispatch Ledger\",\"meaning\":\"DuckDB dataset tracking factory-to-factory package dispatches and delivery status.\",\"rule\":\"Use for retry logic and confirming packages reached their destination.\"},\"Node Identity\":{\"plain_english\":\"Node Identity Registry\",\"meaning\":\"DuckDB dataset of all known hives — self and peers — with capabilities and status.\",\"rule\":\"Use for routing dispatches and detecting stale peers. Never store raw tokens.\"},\"Request Watchdog\":{\"plain_english\":\"Request Watchdog Tracker\",\"meaning\":\"DuckDB dataset tracking every outbound API request lifecycle — pending, in_flight, done, timeout, error.\",\"rule\":\"Use for retry management and timeout detection on chunk requests.\"},\"Script Registry\":{\"plain_english\":\"Script Registry Ledger\",\"meaning\":\"DuckDB dataset mirroring script-registry.json with run history and stats.\",\"rule\":\"Use for trigger matching, performance analytics, and detecting broken or unused scripts.\"},\"Dispatcher\":{\"plain_english\":\"Hive Dispatcher\",\"meaning\":\"Script that sends factory packages to target hives via their Zo API bootstrap endpoint.\",\"rule\":\"Use to distribute factory updates. Creates outbound dispatch row, updates status on acknowledgment.\"},\"Cell Bootstrap\":{\"plain_english\":\"Cell Bootstrap\",\"meaning\":\"Script that receives factory packages from a dispatcher and applies them to the local hive.\",\"rule\":\"Use on the receiving hive. Creates inbound dispatch row, applies package, updates status=applied.\"},\"Talkback\":{\"plain_english\":\"Factory Talkback\",\"meaning\":\"Periodic peer ping via Zo API that checks if a hive is alive, its version, and its capabilities.\",\"rule\":\"Use for peer discovery and network health. talkback.mjs is the script; /api/factory/talkback is the endpoint.\"},\"Chunker\":{\"plain_english\":\"Auto-Chunker\",\"meaning\":\"Script that detects oversized prompts and splits them into safe sub-prompts based on sentence count, word count, and risk signals.\",\"rule\":\"Use before sending risky requests to prevent timeouts. Triggered when sentences > 3 OR words > 150 OR risk = unknown.\"},\"Satisfier\":{\"plain_english\":\"Satisfier\",\"meaning\":\"A function that checks whether a BUILD-mode prompt has enough context to be executed — target, type, where, what, who, how.\",\"rule\":\"Use to gate BUILD mode. Returns false for unknown risk until all required fields are present.\"},\"Mode\":{\"plain_english\":\"Mode\",\"meaning\":\"The intake routing decision — DISCUSS (free AI chat), BUILD (full scope, satisfaction required), MICRO (single file, direct), PLAN (diversion to planner).\",\"rule\":\"Use to determine how much structure to apply before execution.\"}}",
-  "_updated": "2026-04-28T20:17:17.466Z",
-  "_note": "Auto-generated by script-dictionary.mjs",
+  "_updated": "2026-04-30T16:30:00.000Z",
+  "_note": "Governed Script Factory vocabulary and executable forge state for Zo bootstrap deployments.",
   "Forge": {
     "auto-chunker": {
       "plain_english": "Auto Chunker",
-      "meaning": "Auto-detects chunking needs and splits requests by complexity and token weight",
-      "rule": "Use auto-chunker when split chunk complex request.",
-      "triggers": [
-        "split chunk complex request"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Detects risky or oversized requests and splits them into bounded work chunks.",
+      "rule": "Use auto-chunker before risky build or transport work.",
+      "triggers": ["split chunk complex request"],
       "type": "gate",
       "file": "auto-chunker.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "cell-bootstrap": {
       "plain_english": "Cell Bootstrap",
-      "meaning": "Multi-source bootstrap — tries github/hive/interlink/skill in priority order",
-      "rule": "Use cell-bootstrap when bootstrap install init.",
-      "triggers": [
-        "bootstrap install init"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Initializes a Zo cell or hive node from the portable bootstrap package.",
+      "rule": "Use cell-bootstrap for install, verify, and init flows.",
+      "triggers": ["bootstrap install init"],
       "type": "gate",
       "file": "bootstrap.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "intake-engine": {
       "plain_english": "Intake Engine",
-      "meaning": "Gatekeeper — routes prompts, approves AI involvement",
-      "rule": "Use intake-engine when add build discuss micro.",
-      "triggers": [
-        "add build discuss micro"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Routes prompts through known scripts or records a script gap.",
+      "rule": "Use intake-engine before ad hoc implementation.",
+      "triggers": ["add build discuss micro"],
       "type": "gate",
       "file": "compress-prompt.mjs",
-      "status": "pending"
+      "status": "active"
+    },
+    "decompress": {
+      "plain_english": "Decompress",
+      "meaning": "Expands compressed or encoded factory packets back into readable contract content.",
+      "rule": "Use decompress when machine transport must be inspected or restored to human-readable form.",
+      "triggers": ["decompress", "decode payload", "expand packet"],
+      "type": "utility",
+      "file": "decompress.mjs",
+      "status": "active"
+    },
+    "emit-contract": {
+      "plain_english": "Emit Contract",
+      "meaning": "Creates a structured contract packet from a bounded prompt or factory request.",
+      "rule": "Use emit-contract before transport or worker execution when a durable typed packet is needed.",
+      "triggers": ["emit contract", "create contract", "write packet"],
+      "type": "utility",
+      "file": "emit-contract.mjs",
+      "status": "active"
     },
     "dataset-store": {
       "plain_english": "Dataset Store",
-      "meaning": "Manages DuckDB datasets for chat-contracts, chat-logs, hive-events, node-registry, request-log, script-registry",
-      "rule": "Use dataset-store when store log query dataset.",
-      "triggers": [
-        "store log query dataset"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Writes local dataset rows for contracts, logs, registry, and talkback surfaces.",
+      "rule": "Use dataset-store when a script needs a durable local record.",
+      "triggers": ["store log query dataset"],
       "type": "dataset",
       "file": "dataset-store.mjs",
-      "status": "pending"
+      "status": "active"
+    },
+    "forge-auto-capture": {
+      "plain_english": "Forge Auto Capture",
+      "meaning": "Watches for missing script patterns and seeds durable script-gap or capture records.",
+      "rule": "Use forge-auto-capture to turn repeated missing-script needs into governed follow-up work.",
+      "triggers": ["capture forge", "missing script", "script gap"],
+      "type": "forge",
+      "file": "forge-auto-capture.mjs",
+      "status": "active"
     },
     "factory-cli": {
       "plain_english": "Factory CLI",
-      "meaning": "CLI entry point — routes commands to appropriate forges",
-      "rule": "Use factory-cli when list scan run capture.",
-      "triggers": [
-        "list scan run capture"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Command entry point that routes list, scan, heartbeat, registry, doctor, and prompt intake.",
+      "rule": "Use factory-cli for repeatable local factory commands.",
+      "triggers": ["list scan run capture"],
       "type": "orchestrator",
       "file": "factory.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "heartbeat": {
       "plain_english": "Heartbeat Orchestrator",
-      "meaning": "Periodic tick orchestrator — runs train cars on each interval",
-      "rule": "Use heartbeat when tick interval periodic.",
-      "triggers": [
-        "tick interval periodic"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Periodic train runner that loads train-cars and adapts the next pulse interval.",
+      "rule": "Heartbeat owns the tick loop; train cars own bounded tick work.",
+      "triggers": ["tick interval periodic"],
       "type": "trigger",
       "file": "heartbeat.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "hive-api": {
       "plain_english": "Hive API",
-      "meaning": "Hive distribution API — serves manifest, nodes, events",
-      "rule": "Use hive-api when hive api.",
-      "triggers": [
-        "hive api"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Hive distribution route that serves manifest, node records, registration, heartbeat, and ack responses.",
+      "rule": "Use hive-api on the hive distribution node.",
+      "triggers": ["hive api"],
       "type": "bridge",
       "file": "hive/api.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "hive-dispatcher": {
       "plain_english": "Hive Dispatcher",
-      "meaning": "Pulls pending chunks from a cell and dispatches them for execution",
-      "rule": "Use hive-dispatcher when dispatch chunks.",
-      "triggers": [
-        "dispatch chunks"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Builds bootstrap packages and records package dispatch state for downstream nodes.",
+      "rule": "Use hive-dispatcher to package hive or cell bundles.",
+      "triggers": ["dispatch chunks"],
       "type": "orchestrator",
       "file": "hive/dispatcher.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "hive-receive": {
       "plain_english": "Hive Receive",
-      "meaning": "Hive endpoint — handles cell registration, chunk dispatch, heartbeat, status queries",
-      "rule": "Use hive-receive when register dispatch heartbeat.",
-      "triggers": [
-        "register dispatch heartbeat"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Hive endpoint handler for registration, status, and bounded dispatch payloads.",
+      "rule": "Use hive-receive on deployed hive endpoint surfaces.",
+      "triggers": ["register dispatch heartbeat"],
       "type": "gate",
       "file": "hive/receive.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "talkback": {
       "plain_english": "Talkback",
-      "meaning": "Reports node status and pending chunk count back to the hive",
-      "rule": "Use talkback when talkback status.",
-      "triggers": [
-        "talkback status"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Reports node status and handles compact hive query responses.",
+      "rule": "Use talkback for node health, status, and result evidence.",
+      "triggers": ["talkback status"],
       "type": "sensor",
       "file": "hive/talkback.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "scan-workspace": {
       "plain_english": "Scan Workspace",
-      "meaning": "Scans workspace and builds codebase tree artifact",
-      "rule": "Use scan-workspace when scan workspace.",
-      "triggers": [
-        "scan workspace"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Scans bounded non-secret workspace surfaces and writes a scan artifact.",
+      "rule": "Use scan-workspace to refresh local context without reading secrets.",
+      "triggers": ["scan workspace"],
       "type": "artifact",
-      "file": "scan-workspace.mjs",
-      "status": "pending"
+      "file": "artifacts/scan-workspace.mjs",
+      "status": "active"
+    },
+    "page-add": {
+      "plain_english": "Page Add",
+      "meaning": "Creates a page artifact with standard IMSCE page/index and page-modal structure.",
+      "rule": "Use page-add when a request needs a new route or page artifact.",
+      "triggers": ["add page", "create page", "new page", "add route", "create route"],
+      "type": "artifact",
+      "file": "artifacts/page-add.mjs",
+      "status": "active"
+    },
+    "section-add": {
+      "plain_english": "Section Add",
+      "meaning": "Creates a section artifact that sits inside a page modal and accepts cards.",
+      "rule": "Use section-add for page sections such as hero, content, or footer.",
+      "triggers": ["add section", "create section", "new section", "add hero", "add footer"],
+      "type": "artifact",
+      "file": "artifacts/section-add.mjs",
+      "status": "active"
+    },
+    "card-add": {
+      "plain_english": "Card Add",
+      "meaning": "Creates a card artifact with slots for title, body, and actions.",
+      "rule": "Use card-add for bounded widgets or grouped content inside a section.",
+      "triggers": ["add card", "create card", "new card", "add widget", "dashboard widget"],
+      "type": "artifact",
+      "file": "artifacts/card-add.mjs",
+      "status": "active"
+    },
+    "button-add": {
+      "plain_english": "Button Add",
+      "meaning": "Creates a button element artifact with anchored placement.",
+      "rule": "Use button-add when a card or form needs a governed button element.",
+      "triggers": ["add button", "create button", "new button", "button"],
+      "type": "artifact",
+      "file": "artifacts/button-add.mjs",
+      "status": "active"
+    },
+    "field-add": {
+      "plain_english": "Field Add",
+      "meaning": "Creates a form field element artifact.",
+      "rule": "Use field-add for input fields inside governed form artifacts.",
+      "triggers": ["add field", "create field", "new field", "input field", "form field"],
+      "type": "artifact",
+      "file": "artifacts/field-add.mjs",
+      "status": "active"
+    },
+    "text-add": {
+      "plain_english": "Text Add",
+      "meaning": "Creates a text, label, or heading element artifact.",
+      "rule": "Use text-add for governed copy, labels, or headings.",
+      "triggers": ["add text", "create text", "add label", "add heading", "new heading"],
+      "type": "artifact",
+      "file": "artifacts/text-add.mjs",
+      "status": "active"
+    },
+    "form-add": {
+      "plain_english": "Form Add",
+      "meaning": "Creates a form artifact with field definitions and a submit button.",
+      "rule": "Use form-add when a page or card needs a governed form structure.",
+      "triggers": ["add form", "create form", "new form"],
+      "type": "artifact",
+      "file": "artifacts/form-add.mjs",
+      "status": "active"
+    },
+    "git-commit": {
+      "plain_english": "Git Commit",
+      "meaning": "Reserved source-control forge for commit/push work.",
+      "rule": "Keep blocked for autonomous Zo execution; source-control mutation requires explicit human control.",
+      "triggers": ["commit", "push"],
+      "type": "artifact",
+      "file": "artifacts/git-commit.mjs",
+      "status": "blocked"
+    },
+    "deploy-pages": {
+      "plain_english": "Deploy Pages",
+      "meaning": "Reserved deployment forge for publishing page artifacts.",
+      "rule": "Keep blocked for autonomous Zo execution; deployment requires explicit human control.",
+      "triggers": ["deploy"],
+      "type": "artifact",
+      "file": "artifacts/deploy-pages.mjs",
+      "status": "blocked"
+    },
+    "atomic-common": {
+      "plain_english": "Atomic Common",
+      "meaning": "Shared helper module used by atomic artifact forges for argument parsing, workspace scanning, labels, routes, and artifact writes.",
+      "rule": "Categorize as a utility helper, not a runnable forge. It supports artifact forges and should not appear as a user-facing script.",
+      "triggers": [],
+      "type": "utility",
+      "file": "artifacts/atomic-common.mjs",
+      "status": "active"
     },
     "heartbeat-car": {
       "plain_english": "Heartbeat Car",
-      "meaning": "Train car — fires GET /api/hive?status=1 with cell identity on each tick",
-      "rule": "Use heartbeat-car when heartbeat tick.",
-      "triggers": [
-        "heartbeat tick"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Train car that refreshes dashboard state and optionally pings hive status.",
+      "rule": "Runs first on every heartbeat tick.",
+      "triggers": ["heartbeat tick"],
       "type": "trigger",
       "file": "train-cars/01-dashboard.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "spawn-worker-car": {
       "plain_english": "Spawn Worker Car",
-      "meaning": "Train car — spawns a worker for each pending chunk on the dispatch queue",
-      "rule": "Use spawn-worker-car when spawn worker dispatch.",
-      "triggers": [
-        "spawn worker dispatch"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Train car that runs one bounded local inbox worker when pending tandem contracts exist.",
+      "rule": "Never runs arbitrary commands; it routes through contract-inbox-runner.",
+      "triggers": ["spawn worker dispatch"],
       "type": "orchestrator",
       "file": "train-cars/02-spawn-worker.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "scan-workspace-car": {
       "plain_english": "Scan Workspace Car",
-      "meaning": "Train car — re-runs scan-workspace if last scan is stale (>24h)",
-      "rule": "Use scan-workspace-car when scan gaps workspace.",
-      "triggers": [
-        "scan gaps workspace"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Train car that refreshes the bounded workspace scan when the latest scan is stale.",
+      "rule": "Uses scan-workspace rather than broad ad hoc filesystem reads.",
+      "triggers": ["scan gaps workspace"],
       "type": "artifact",
       "file": "train-cars/03-scan-workspace.mjs",
-      "status": "pending"
+      "status": "active"
     },
     "hive-sync-car": {
       "plain_english": "Hive Sync Car",
-      "meaning": "Train car — pulls latest manifest from hive and updates local packages if newer",
-      "rule": "Use hive-sync-car when hive sync.",
-      "triggers": [
-        "hive sync"
-      ],
-      "opcodes": [],
-      "guards": [],
+      "meaning": "Train car that checks a configured hive manifest and records update availability.",
+      "rule": "Reports sync state only; package application remains governed by explicit scripts.",
+      "triggers": ["hive sync"],
       "type": "bridge",
       "file": "train-cars/04-hive-sync.mjs",
-      "status": "pending"
+      "status": "active"
+    },
+    "route-manifest-bridge": {
+      "plain_english": "Route Manifest Bridge",
+      "meaning": "Applies route injection manifests to Zo Space routes through a repeatable MCP bridge.",
+      "rule": "The bridge is generic. App-specific manifest generators must stay in app scope, not in the generic factory runtime.",
+      "triggers": ["route manifest bridge", "apply route manifest", "manifest route apply"],
+      "type": "bridge",
+      "file": "route-manifest-bridge.mjs",
+      "status": "active"
+    },
+    "interlink": {
+      "plain_english": "Interlink",
+      "meaning": "Provides Zo-to-Zo or factory-to-factory interlink transport helpers for emergency or directed coordination.",
+      "rule": "Use interlink only for bounded cross-node transport; prefer file/API tandem when possible.",
+      "triggers": ["interlink", "zo to zo", "cross node"],
+      "type": "bridge",
+      "file": "interlink.mjs",
+      "status": "active"
+    },
+    "script-dictionary": {
+      "plain_english": "Script Dictionary",
+      "meaning": "Generates or refreshes dictionary-style script terminology artifacts from local factory definitions.",
+      "rule": "Use script-dictionary to keep Scriptionary vocabulary inspectable and local-first.",
+      "triggers": ["script dictionary", "scriptionary", "dictionary"],
+      "type": "utility",
+      "file": "script-dictionary.mjs",
+      "status": "active"
     }
   },
   "Scriptonomy": {
-    "DISCUSS": "Free-form AI chat — bypasses scripts, no gate",
-    "MICRO": "≤1 file mutation — fires directly, no gate",
-    "BUILD": "Full scope — requires satisfaction contract",
-    "PLAN": "Novel/complex — routed to plan first"
+    "DISCUSS": "Free-form AI chat; bypasses scripts unless a governed route exists.",
+    "MICRO": "Single bounded mutation or local operation.",
+    "BUILD": "Full scoped work; requires enough typed context to execute.",
+    "PLAN": "Novel or complex request routed to planning before execution."
   },
   "BootstrapSources": {
-    "github": "git clone from canonical repo — default source",
-    "hive": "pull packages from registered Hive via /api/hive — Cell bootstrap",
-    "interlink": "Zo-to-Zo ask API — direct from director Zo — emergency/override",
-    "skill": "use refer-library-bootstrap skill — skill-based bootstrap"
+    "github": "Clone from the canonical repo when a full bootstrap is needed.",
+    "hive": "Pull packages from a registered hive endpoint.",
+    "interlink": "Zo-to-Zo API lane for emergency or directed transfer.",
+    "skill": "Use the refer-library-bootstrap skill where installed."
   },
   "HiveCellArchitecture": {
-    "Hive": "Distribution hub — owns manifest, receives heartbeats, dispatches work",
-    "Cell": "A Zo registered to a Hive — fires heartbeats, receives dispatches",
-    "Terminal": "A standalone Zo not connected to any Hive"
+    "Hive": "Distribution hub that owns manifest, receives heartbeats, and dispatches work.",
+    "Cell": "Registered Zo node that runs scripts and reports talkback.",
+    "Terminal": "Standalone Zo node not yet connected to a hive."
+  },
+  "ExecutionSequence": {
+    "definition": "Canonical rank order for how factory rules, intake, resolvers, references, scripts, runs, evidence, repairs, and promotion are applied.",
+    "rule": "Use SEQ-A through SEQ-L to decide hierarchy before choosing a script route. Lower ranks execute before higher ranks when both apply. Use dotted sub-sequences inside parent ranks.",
+    "SEQ-A": "Kernel Governance: always-on Script Factory and Smart Intake rules.",
+    "SEQ-B": "Request Intake: prompt, document, command, or API request becomes a compact contract.",
+    "SEQ-C": "Clarification Resolver: ambiguity is reduced with bounded choices or a deterministic route.",
+    "SEQ-D": "Authority And Context: official references, local context, active rule packs, and user method scope are gathered.",
+    "SEQ-E": "Strategy Selection: sequencer chooses the named strategy, method, forge, and script route.",
+    "SEQ-F": "Forge Or Script Generation: missing deterministic behavior is generated or modified as a candidate.",
+    "SEQ-G": "Script Execution: selected registered script or candidate runs against the contract.",
+    "SEQ-H": "Evidence Capture: observed effect, changed artifacts, checks, receipts, and talkback are recorded.",
+    "SEQ-I": "Effect Comparison: observed effect is compared with intended effect and allowed boundary.",
+    "SEQ-J": "Modification Loop: mismatches repair the smallest responsible layer and rerun the same contract.",
+    "SEQ-K": "Promotion And Registration: verified scripts, methods, strategies, or rule packs become active in scope.",
+    "SEQ-L": "Scriptionary Refresh: new terms, sequence changes, methods, strategies, and artifacts are written back to the text map blueprint."
+  },
+  "SubSequences": {
+    "definition": "Nested deterministic ranks inside a parent execution sequence layer.",
+    "rule": "Use sub-sequences when a main sequence step needs deterministic internal branching, checks, repair, or replay without creating a new top-level rank.",
+    "SEQ-E.1": "Condition Read: read contract, registry, active rule packs, locks, and evidence.",
+    "SEQ-E.2": "Chain Decision: choose continue, branch, fork, merge, modify, delete, skip, block, supersede, or promote.",
+    "SEQ-E.3": "Collision Check: compare read, write, and lock surfaces before allowing parallel branches.",
+    "SEQ-J.1": "Mismatch Classifier: classify the mismatch and choose the smallest responsible repair layer.",
+    "SEQ-J.2": "Repair Action: modify, delete, replace, regenerate, or block the affected script chain element.",
+    "SEQ-J.3": "Replay Gate: rerun the same contract after repair and compare observed effect again."
+  },
+  "ConditionalChainController": {
+    "definition": "Deterministic layer that manages chain continuation, splits, forks, merges, modification, deletion, skips, blocks, supersession, and promotion.",
+    "actions": ["continue", "branch", "fork", "merge", "modify", "delete", "skip", "block", "supersede", "promote"],
+    "rule": "Every action must record condition, chosen action, affected scripts, surfaces, and evidence. Forks require non-colliding surfaces. Deletes require reason, archive or rollback path, and registry update."
+  },
+  "NamedPatterns": {
+    "Method Name": "Stable name for a repeatable way a user, project, domain, forge, or factory prefers to perform work.",
+    "Strategy Name": "Stable name for a reusable plan that coordinates methods, scripts, sequence ranks, and checks to reach an intended effect.",
+    "Text Map Blueprint": "A scriptionary and legend detailed enough to reconstruct terms, hierarchy, sequence, methods, strategies, and activation rules from text.",
+    "rule": "Methods and strategies must declare activation trigger, sequence ranks, intended effect, scope, and evidence path before registration."
+  },
+  "NaturalRuleIntake": {
+    "plain_english": "User Says The Rule Normally",
+    "meaning": "Users upload documents, state preferences, correct outputs, or give rules in ordinary language.",
+    "rule": "Do not ask users to label laws as unscripted or dormant. Smart Intake captures natural rule input and routes it to doctrine compilation, categorization, fixtures, modification loop, and registry promotion.",
+    "internal_states": ["source", "candidate", "tested", "registered", "active", "blocked", "superseded"]
+  },
+  "Clarifications": {
+    "scan-workspace": "The executable scanner is artifacts/scan-workspace.mjs. The train-car entry train-cars/03-scan-workspace.mjs is a heartbeat wrapper that calls the scanner when stale. A root scripts/factory/scan-workspace.mjs file is not canonical in this source tree; if a deployed node reports one, treat it as stale deployment drift unless it is deliberately reintroduced and registered.",
+    "artifacts-directory": "The source artifact forges live in scripts/factory/artifacts/. If a deployed node reports artifacts/ as empty, resync the artifact forge files from source before treating the node as complete."
   }
 }

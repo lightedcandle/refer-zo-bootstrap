@@ -1,0 +1,187 @@
+{
+  "schema": "refer.alliance.phase2-data-contract.v1",
+  "phase": "phase2",
+  "purpose": "Define the Alliance data model and persistence decision gates before adding hosted auth or a cloud database.",
+  "source_authority": [
+    "scopes/alliance/site-manifest.json",
+    "scopes/alliance/story-authority.md",
+    "datasets/script-artifacts/scoped/alliance/story/alliance-scoping-plan-latest.json",
+    "datasets/script-artifacts/scoped/alliance/vocabulary/alliance-vocabulary-latest.json",
+    "/home/workspace/Projects/Alliance-Hub/alliance/factory/story/authority.md",
+    "docs/hdp-1-open-items.md",
+    "docs/zo-vipc-bootstrap-blueprint.md"
+  ],
+  "persistence_strategy": {
+    "current": "supabase_edge_selected",
+    "local_surfaces": [
+      "scopes/alliance/site-manifest.json",
+      "datasets/script-artifacts/scoped/alliance/site/",
+      "datasets/script-artifacts/scoped/alliance/phase2/"
+    ],
+    "remote_surface": "/home/workspace/Projects/Alliance-Hub/alliance/factory/phase2-data-contract.json",
+    "cloud_database": "supabase",
+    "supabase_gate": "Supabase is selected for persistent private records. Zo must call Supabase Edge Functions; direct Supabase table writes from Zo are not allowed.",
+    "selected_backend": "supabase_edge_functions",
+    "edge_function": "alliance-record-write"
+  },
+  "auth_policy": {
+    "phase2_behavior": "public_read_mock_write",
+    "phase2_rule": "Do not collect private user data in Phase 2. Forms may be represented as structured draft records only.",
+    "phase5_gate": "auth_required",
+    "roles": ["public", "member", "leader", "church", "admin"]
+  },
+  "entities": [
+    {
+      "id": "organization",
+      "label": "Organization",
+      "route": "/dashboard/organizations",
+      "local_dataset": "alliance-organizations",
+      "source_manifest_key": "churches",
+      "fields": ["id", "name", "status", "summary", "region", "primary_contact", "updated_at"],
+      "role_access": {
+        "public": ["read_public"],
+        "member": ["read_public"],
+        "leader": ["read_public", "read_internal"],
+        "church": ["read_public", "read_own", "update_own"],
+        "admin": ["read_all", "create", "update", "archive"]
+      }
+    },
+    {
+      "id": "person",
+      "label": "Person",
+      "route": "/dashboard/people",
+      "local_dataset": "alliance-people",
+      "source_manifest_key": "roles",
+      "fields": ["id", "display_name", "role", "organization_id", "status", "contact_scope", "updated_at"],
+      "role_access": {
+        "public": [],
+        "member": ["read_self"],
+        "leader": ["read_ministry_contacts"],
+        "church": ["read_own_people", "update_own_people"],
+        "admin": ["read_all", "create", "update", "archive"]
+      }
+    },
+    {
+      "id": "event",
+      "label": "Event",
+      "route": "/dashboard/calendar",
+      "local_dataset": "alliance-events",
+      "source_manifest_key": "gatherings",
+      "fields": ["id", "title", "starts_at", "status", "audience", "location", "registration_state"],
+      "role_access": {
+        "public": ["read_public"],
+        "member": ["read_public", "register_self"],
+        "leader": ["read_public", "manage_assigned"],
+        "church": ["read_public", "register_group"],
+        "admin": ["read_all", "create", "update", "archive"]
+      }
+    },
+    {
+      "id": "initiative",
+      "label": "Initiative",
+      "route": "/dashboard/initiatives",
+      "local_dataset": "alliance-initiatives",
+      "source_manifest_key": "modules",
+      "fields": ["id", "title", "owner_role", "status", "goal", "start_date", "target_date"],
+      "role_access": {
+        "public": ["read_public"],
+        "member": ["read_public", "join_open"],
+        "leader": ["read_all", "update_assigned"],
+        "church": ["read_all", "join_as_church"],
+        "admin": ["read_all", "create", "update", "archive"]
+      }
+    },
+    {
+      "id": "document",
+      "label": "Document",
+      "route": "/dashboard/documents",
+      "local_dataset": "alliance-documents",
+      "source_manifest_key": "documents",
+      "fields": ["id", "title", "audience", "status", "document_type", "storage_ref", "updated_at"],
+      "role_access": {
+        "public": ["read_public"],
+        "member": ["read_member"],
+        "leader": ["read_leader"],
+        "church": ["read_church", "submit_own"],
+        "admin": ["read_all", "create", "update", "archive"]
+      }
+    },
+    {
+      "id": "governance_item",
+      "label": "Governance Item",
+      "route": "/dashboard/governance",
+      "local_dataset": "alliance-governance",
+      "source_manifest_key": "pastor_council",
+      "fields": ["id", "title", "status", "owner_role", "decision_state", "due_at", "updated_at"],
+      "role_access": {
+        "public": [],
+        "member": [],
+        "leader": ["read_council", "comment"],
+        "church": ["read_relevant"],
+        "admin": ["read_all", "create", "update", "close"]
+      }
+    },
+    {
+      "id": "compliance_task",
+      "label": "Compliance Task",
+      "route": "/dashboard/compliance",
+      "local_dataset": "alliance-compliance",
+      "source_manifest_key": "work_queues",
+      "fields": ["id", "title", "organization_id", "standard", "status", "due_at", "evidence_ref"],
+      "role_access": {
+        "public": [],
+        "member": [],
+        "leader": ["read_assigned"],
+        "church": ["read_own", "submit_own"],
+        "admin": ["read_all", "create", "update", "approve"]
+      }
+    },
+    {
+      "id": "communication",
+      "label": "Communication",
+      "route": "/dashboard/communications",
+      "local_dataset": "alliance-communications",
+      "source_manifest_key": "today",
+      "fields": ["id", "title", "audience", "status", "channel", "scheduled_at", "approved_by"],
+      "role_access": {
+        "public": ["read_public"],
+        "member": ["read_member"],
+        "leader": ["read_leader", "draft"],
+        "church": ["read_church"],
+        "admin": ["read_all", "create", "update", "publish"]
+      }
+    },
+    {
+      "id": "request",
+      "label": "Request",
+      "route": "/dashboard/requests",
+      "local_dataset": "alliance-requests",
+      "source_manifest_key": "forms",
+      "fields": ["id", "request_type", "submitted_by_scope", "status", "summary", "assigned_role", "created_at"],
+      "role_access": {
+        "public": ["create_public_draft"],
+        "member": ["create_self", "read_self"],
+        "leader": ["read_assigned", "update_assigned"],
+        "church": ["create_church", "read_own"],
+        "admin": ["read_all", "assign", "close"]
+      }
+    }
+  ],
+  "phase2_minimums": {
+    "entities": 8,
+    "roles": 5,
+    "routes": 8,
+    "datasets": 8,
+    "supabase_decision_gates": 4
+  },
+  "supabase_decision_gates": [
+    "private_member_records",
+    "persistent_form_writes",
+    "multi_user_admin_workflow",
+    "role_scoped_row_access"
+  ],
+  "next_phase": {
+    "phase3": "Generate route-level create/edit mock forms from this contract while writes remain local drafts.",
+    "phase5": "Add auth provider and role enforcement after the Alliance approves the private data model."
+  }
+}

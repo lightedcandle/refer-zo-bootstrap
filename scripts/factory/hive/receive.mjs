@@ -25,9 +25,9 @@ function log(type, nodeId, msg, extra={}) {
   console.log(`[${type}]${nodeId ? " "+nodeId : ""}: ${msg}`);
 }
 
-function requireAuth(headers) {
+function requireAuth(headers, expected = HIVE_SECRET) {
   const token = (headers.authorization || headers.Authorization || "").replace(/^Bearer\s+/i, "");
-  return token === HIVE_SECRET;
+  return token === expected;
 }
 
 function json(data, status=200) {
@@ -41,13 +41,13 @@ function readJson(path) {
   try { return JSON.parse(require("fs").readFileSync(path, "utf8")); } catch { return null; }
 }
 
-async function dispatchChunk(nodeUrl, chunk, sessionId, index) {
+async function dispatchChunk(nodeUrl, chunk, sessionId, index, hiveSecret = HIVE_SECRET) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const url = `${nodeUrl.replace(/\/$/, "")}/api/hive/chunk?session=${sessionId}&index=${index}`;
       const resp = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${HIVE_SECRET}`, "X-Hive-Source": "apostlej" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hiveSecret}`, "X-Hive-Source": "apostlej" },
         body: JSON.stringify(chunk),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -94,9 +94,9 @@ async function handleGet(url) {
   return json({ endpoint: "apostlej-hive", mode: "receiver", configured: !!HIVE_SECRET, nodes: nodeList.length });
 }
 
-async function handlePost(nodeUrl, body) {
-  const auth = (nodeUrl.headers || {}).authorization || (nodeUrl.Authorization) || "";
-  if (!HIVE_SECRET || !requireAuth({ authorization: auth })) {
+async function handlePost(request, body, hiveSecret = HIVE_SECRET) {
+  const auth = request.headers.get("authorization") || request.headers.get("Authorization") || "";
+  if (!hiveSecret || !requireAuth({ authorization: auth }, hiveSecret)) {
     log("AUTH", null, "unauthorized POST");
     return json({ error: "unauthorized" }, 401);
   }
@@ -124,7 +124,8 @@ async function handlePost(nodeUrl, body) {
     return json({ ok: true, nodeCount: nodeList.length, entry });
   }
   if (mode === "dispatch" || chunks.length > 0) {
-    const results = await Promise.all(chunks.map((c,i) => dispatchChunk(nodeUrl, c, sessionId, i)));
+    const onlineNodes = nodeList.filter(n => n.status === "online" && n.url);
+    const results = await Promise.all(onlineNodes.flatMap((node) => chunks.map((c,i) => dispatchChunk(node.url, c, sessionId, i, hiveSecret))));
     const ok = results.filter(r=>r.ok).length;
     log("DISPATCH", null, `${ok}/${results.length} dispatched OK`);
     return json({ total: results.length, successful: ok, failed: results.length-ok, results, sessionId });
@@ -137,9 +138,8 @@ export default {
     const secret = env.HIVE_SECRET || HIVE_SECRET;
     const url = new URL(request.url);
     const pathname = url.pathname.replace(/\/$/, "");
-    const nodeUrl = `https://${url.host}`;
     if (request.method === "GET" && pathname === "/api/hive") return handleGet(url.search ? `${pathname}${url.search}` : pathname);
-    if (request.method === "POST" && pathname === "/api/hive") return handlePost(nodeUrl, await request.text().catch(()=>""));
+    if (request.method === "POST" && pathname === "/api/hive") return handlePost(request, await request.text().catch(()=>""), secret);
     return json({ error: "not found" }, 404);
   }
 };

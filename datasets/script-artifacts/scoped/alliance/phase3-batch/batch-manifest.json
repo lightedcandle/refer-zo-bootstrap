@@ -1,0 +1,58 @@
+{
+  "ok": true,
+  "status": "done",
+  "forge": "phase3-batch",
+  "scope": "alliance",
+  "entities": [
+    {
+      "name": "Organization",
+      "route": "/dashboard/organizations",
+      "fields": 9,
+      "status": "ready"
+    },
+    {
+      "name": "Person",
+      "route": "/dashboard/people",
+      "fields": 8,
+      "status": "ready"
+    },
+    {
+      "name": "Event",
+      "route": "/dashboard/calendar",
+      "fields": 8,
+      "status": "ready"
+    },
+    {
+      "name": "Initiative",
+      "route": "/dashboard/initiatives",
+      "fields": 8,
+      "status": "ready"
+    },
+    {
+      "name": "Document",
+      "route": "/dashboard/documents",
+      "fields": 6,
+      "status": "ready"
+    },
+    {
+      "name": "GovernanceItem",
+      "route": "/dashboard/governance",
+      "fields": 7,
+      "status": "ready"
+    },
+    {
+      "name": "ComplianceTask",
+      "route": "/dashboard/compliance",
+      "fields": 6,
+      "status": "ready"
+    },
+    {
+      "name": "Communication",
+      "route": "/dashboard/communications",
+      "fields": 7,
+      "status": "ready"
+    }
+  ],
+  "output_dir": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-artifacts\\scoped\\alliance\\phase3-batch",
+  "next": "Run the generic route-manifest bridge with this manifest directory to apply these manifests to Zo Space routes."
+}

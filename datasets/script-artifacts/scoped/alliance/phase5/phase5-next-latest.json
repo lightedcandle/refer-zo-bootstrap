@@ -1,0 +1,14 @@
+{
+  "schema": "refer.alliance.phase5-next.v1",
+  "generated_at": "2026-05-01T05:50:01.347Z",
+  "phase": "phase5-persistence-gate",
+  "rule": "Zo Site local-file persistence is sandbox evidence only. Real Alliance persistence goes through Supabase Edge Functions, not direct Zo-to-Supabase table calls.",
+  "next_actions": [],
+  "gaps": [],
+  "ready_for_next_phase": true,
+  "next_phase": "Continue into auth and role policy on top of the verified Supabase Edge Function write lane.",
+  "evidence": [
+    "phase5_status:checked",
+    "persistence_gate:supabase_edge_verified"
+  ]
+}

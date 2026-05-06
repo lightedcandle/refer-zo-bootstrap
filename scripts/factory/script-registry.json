@@ -1,13 +1,21 @@
 {
   "version": "1.1.0",
-  "updated": "2026-04-30T01:30:00Z",
+  "updated": "2026-05-01T04:22:18.391Z",
   "forges": [
     {
       "id": "compress-prompt",
       "name": "Compress Prompt",
       "type": "gate",
       "description": "Gatekeeper that routes prompts and approves AI involvement.",
-      "trigger_intents": ["add", "build", "create", "show", "deploy", "scan", "run"],
+      "trigger_intents": [
+        "add",
+        "build",
+        "create",
+        "show",
+        "deploy",
+        "scan",
+        "run"
+      ],
       "status": "active",
       "version": "1.0.0",
       "requires_ai": false,
@@ -18,19 +26,35 @@
       "name": "Page Add",
       "type": "forge",
       "description": "Create a page artifact with standard IMSCE page/index and page-modal structure.",
-      "trigger_intents": ["add page", "create page", "new page", "add route", "create route"],
+      "trigger_intents": [
+        "add page",
+        "create page",
+        "new page",
+        "add route",
+        "create route"
+      ],
       "status": "active",
       "version": "1.1.0",
       "requires_ai": false,
       "script_file": "artifacts/page-add.mjs",
-      "anchors": ["hero", "content", "footer"]
+      "anchors": [
+        "hero",
+        "content",
+        "footer"
+      ]
     },
     {
       "id": "section-add",
       "name": "Section Add",
       "type": "forge",
       "description": "Create a section artifact that sits inside a page modal and accepts cards.",
-      "trigger_intents": ["add section", "create section", "new section", "add hero", "add footer"],
+      "trigger_intents": [
+        "add section",
+        "create section",
+        "new section",
+        "add hero",
+        "add footer"
+      ],
       "status": "active",
       "version": "1.0.0",
       "requires_ai": false,
@@ -41,7 +65,13 @@
       "name": "Card Add",
       "type": "forge",
       "description": "Create a card artifact with slots for title, body, and actions.",
-      "trigger_intents": ["add card", "create card", "new card", "add widget", "dashboard widget"],
+      "trigger_intents": [
+        "add card",
+        "create card",
+        "new card",
+        "add widget",
+        "dashboard widget"
+      ],
       "status": "active",
       "version": "1.0.0",
       "requires_ai": false,
@@ -52,16 +82,36 @@
       "name": "Button Add",
       "type": "forge",
       "description": "Create a button element artifact with anchored placement.",
-      "trigger_intents": ["add button", "create button", "new button", "button"],
+      "trigger_intents": [
+        "add button",
+        "create button",
+        "new button",
+        "button"
+      ],
       "status": "active",
       "version": "1.1.0",
       "requires_ai": false,
       "script_file": "artifacts/button-add.mjs",
       "script_dna": {
-        "opcodes": ["READ_CONTRACT", "RESOLVE_TARGET", "CHECK_GUARD", "WRITE_ARTIFACT"],
-        "input_ports": ["anchor_id", "label", "variant"],
-        "output_ports": ["artifact", "element_id"],
-        "guards": ["element_requires_card_parent", "route_must_be_named"]
+        "opcodes": [
+          "READ_CONTRACT",
+          "RESOLVE_TARGET",
+          "CHECK_GUARD",
+          "WRITE_ARTIFACT"
+        ],
+        "input_ports": [
+          "anchor_id",
+          "label",
+          "variant"
+        ],
+        "output_ports": [
+          "artifact",
+          "element_id"
+        ],
+        "guards": [
+          "element_requires_card_parent",
+          "route_must_be_named"
+        ]
       }
     },
     {
@@ -69,7 +119,13 @@
       "name": "Field Add",
       "type": "forge",
       "description": "Create a form field element artifact.",
-      "trigger_intents": ["add field", "create field", "new field", "input field", "form field"],
+      "trigger_intents": [
+        "add field",
+        "create field",
+        "new field",
+        "input field",
+        "form field"
+      ],
       "status": "active",
       "version": "1.0.0",
       "requires_ai": false,
@@ -80,7 +136,13 @@
       "name": "Text Add",
       "type": "forge",
       "description": "Create a text, label, or heading element artifact.",
-      "trigger_intents": ["add text", "create text", "add label", "add heading", "new heading"],
+      "trigger_intents": [
+        "add text",
+        "create text",
+        "add label",
+        "add heading",
+        "new heading"
+      ],
       "status": "active",
       "version": "1.0.0",
       "requires_ai": false,
@@ -91,7 +153,11 @@
       "name": "Form Add",
       "type": "forge",
       "description": "Create a form artifact with field definitions and a submit button.",
-      "trigger_intents": ["add form", "create form", "new form"],
+      "trigger_intents": [
+        "add form",
+        "create form",
+        "new form"
+      ],
       "status": "active",
       "version": "1.1.0",
       "requires_ai": false,
@@ -102,7 +168,12 @@
       "name": "Scan Workspace",
       "type": "forge",
       "description": "Index workspace files and emit a bounded scan artifact.",
-      "trigger_intents": ["scan", "index", "scan workspace", "index workspace"],
+      "trigger_intents": [
+        "scan",
+        "index",
+        "scan workspace",
+        "index workspace"
+      ],
       "status": "active",
       "version": "1.1.0",
       "requires_ai": false,
@@ -141,11 +212,536 @@
       ]
     },
     {
+      "id": "draft-promotion-runner",
+      "name": "Draft Promotion Runner",
+      "type": "forge",
+      "description": "Promote missing-script drafts immediately into executable, replayed, registered forges.",
+      "trigger_intents": [
+        "promote draft",
+        "auto create script",
+        "resolve script gap",
+        "ratify missing script"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/draft-promotion-runner.mjs",
+      "self_repair_checklist": [
+        "Was the generated forge replayed from the original user intent?",
+        "Did the build trace record changed files, checks, and talkback?",
+        "Did intake return a completed response instead of exposing needs_script?"
+      ]
+    },
+    {
+      "id": "factory-cli",
+      "name": "Factory CLI",
+      "type": "orchestrator",
+      "description": "Route local Script Factory commands and prompt intake through governed scripts.",
+      "trigger_intents": [
+        "factory",
+        "list scripts",
+        "scan workspace",
+        "registry doctor"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory.mjs"
+    },
+    {
+      "id": "cell-bootstrap",
+      "name": "Cell Bootstrap",
+      "type": "gate",
+      "description": "Initialize or verify a Zo cell/hive node from the bootstrap package.",
+      "trigger_intents": [
+        "bootstrap",
+        "install node",
+        "verify node"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/bootstrap.mjs"
+    },
+    {
+      "id": "heartbeat",
+      "name": "Heartbeat",
+      "type": "trigger",
+      "description": "Adaptive heartbeat train that runs node-local train cars.",
+      "trigger_intents": [
+        "heartbeat",
+        "tick",
+        "periodic automation"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/heartbeat.mjs"
+    },
+    {
+      "id": "hive-api",
+      "name": "Hive API",
+      "type": "bridge",
+      "description": "Serve hive manifest, nodes, registration, heartbeat, and ack endpoints.",
+      "trigger_intents": [
+        "hive api",
+        "serve manifest",
+        "register node"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/hive/api.mjs"
+    },
+    {
+      "id": "hive-dispatcher",
+      "name": "Hive Dispatcher",
+      "type": "orchestrator",
+      "description": "Package and record hive/cell bootstrap dispatches.",
+      "trigger_intents": [
+        "dispatch chunks",
+        "package hive",
+        "package cell"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/hive/dispatcher.mjs"
+    },
+    {
+      "id": "hive-receive",
+      "name": "Hive Receive",
+      "type": "gate",
+      "description": "Receive hive registration, status, and dispatch payloads.",
+      "trigger_intents": [
+        "receive hive",
+        "register dispatch heartbeat"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/hive/receive.mjs"
+    },
+    {
+      "id": "talkback",
+      "name": "Talkback",
+      "type": "sensor",
+      "description": "Report node status and compact hive query results.",
+      "trigger_intents": [
+        "talkback",
+        "node status"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/hive/talkback.mjs"
+    },
+    {
+      "id": "heartbeat-car",
+      "name": "Heartbeat Car",
+      "type": "trigger",
+      "description": "Refresh dashboard state and optionally ping hive status on each tick.",
+      "trigger_intents": [
+        "heartbeat tick",
+        "dashboard status"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/train-cars/01-dashboard.mjs"
+    },
+    {
+      "id": "spawn-worker-car",
+      "name": "Spawn Worker Car",
+      "type": "orchestrator",
+      "description": "Run one bounded contract inbox worker when pending tandem contracts exist.",
+      "trigger_intents": [
+        "spawn worker",
+        "pending contract"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/train-cars/02-spawn-worker.mjs"
+    },
+    {
+      "id": "scan-workspace-car",
+      "name": "Scan Workspace Car",
+      "type": "artifact",
+      "description": "Refresh bounded workspace scan artifacts when stale.",
+      "trigger_intents": [
+        "scan gaps workspace",
+        "refresh scan"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/train-cars/03-scan-workspace.mjs"
+    },
+    {
+      "id": "hive-sync-car",
+      "name": "Hive Sync Car",
+      "type": "bridge",
+      "description": "Check configured hive manifest and record update availability.",
+      "trigger_intents": [
+        "hive sync",
+        "manifest update"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/train-cars/04-hive-sync.mjs"
+    },
+    {
+      "id": "route-manifest-bridge",
+      "name": "Route Manifest Bridge",
+      "type": "bridge",
+      "description": "Apply route injection manifests to Zo Space routes through a governed MCP bridge.",
+      "trigger_intents": [
+        "route manifest bridge",
+        "apply route manifest",
+        "apply manifests",
+        "route modal bridge",
+        "manifest route apply"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scripts/factory/route-manifest-bridge.mjs",
+      "scope_rule": "App-specific manifest generation must live outside the generic factory runtime, for example under Projects/<app>/factory on Zo or scopes/<app> in source."
+    },
+    {
+      "id": "alliance-site-build",
+      "name": "Alliance Site Build",
+      "type": "forge",
+      "description": "Generate the Alliance Phase 1 Zo Site source from the scoped Alliance site manifest.",
+      "trigger_intents": [
+        "alliance site build",
+        "continue alliance phase 1",
+        "build alliance site from plan",
+        "alliance sites phase 1",
+        "alliance operational hub"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/build-site-from-manifest.mjs",
+      "scope_rule": "Alliance-specific site content and dynamic placeholders live under scopes/alliance; generic factory runtime must remain app-neutral."
+    },
+    {
+      "id": "alliance-phase1-status",
+      "name": "Alliance Phase 1 Status",
+      "type": "sensor",
+      "description": "Emit compact Phase 1 Alliance Site status from the scoped manifest and generated source.",
+      "trigger_intents": [
+        "alliance phase 1 status",
+        "phase1 status",
+        "what is done in alliance phase 1"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase1-status.mjs"
+    },
+    {
+      "id": "alliance-phase1-next",
+      "name": "Alliance Phase 1 Next",
+      "type": "sensor",
+      "description": "Emit compact next-action gaps for Alliance Phase 1 without rereading the full workspace.",
+      "trigger_intents": [
+        "alliance phase 1 next",
+        "phase1 next",
+        "continue alliance phase 1 efficiently"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase1-next.mjs"
+    },
+    {
+      "id": "alliance-phase2-status",
+      "name": "Alliance Phase 2 Status",
+      "type": "sensor",
+      "description": "Emit compact Alliance Phase 2 data contract status without scanning the full workspace.",
+      "trigger_intents": [
+        "alliance phase 2 status",
+        "phase2 status",
+        "alliance data contract status",
+        "do we need supabase"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase2-status.mjs"
+    },
+    {
+      "id": "alliance-phase2-next",
+      "name": "Alliance Phase 2 Next",
+      "type": "sensor",
+      "description": "Emit compact next-action gaps for the Alliance Phase 2 local-dataset-first data contract.",
+      "trigger_intents": [
+        "alliance phase 2 next",
+        "phase2 next",
+        "continue alliance phase 2 efficiently",
+        "alliance backend next"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase2-next.mjs"
+    },
+    {
+      "id": "alliance-phase2-sync",
+      "name": "Alliance Phase 2 Sync",
+      "type": "bridge",
+      "description": "Sync the compact Alliance Phase 2 data contract and latest status packets to the Alliance Zo site workspace.",
+      "trigger_intents": [
+        "sync alliance phase 2",
+        "ship alliance data contract",
+        "sync phase2 contract to zo"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/sync-phase2-to-zo.mjs"
+    },
+    {
+      "id": "alliance-phase3-status",
+      "name": "Alliance Phase 3 Status",
+      "type": "sensor",
+      "description": "Emit compact status for the Alliance Phase 3 browser-local draft form surface.",
+      "trigger_intents": [
+        "alliance phase 3 status",
+        "phase3 status",
+        "alliance local draft forms status"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase3-status.mjs"
+    },
+    {
+      "id": "alliance-phase3-next",
+      "name": "Alliance Phase 3 Next",
+      "type": "sensor",
+      "description": "Emit compact next-action gaps for Alliance Phase 3 local draft forms.",
+      "trigger_intents": [
+        "alliance phase 3 next",
+        "phase3 next",
+        "continue alliance phase 3 efficiently"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase3-next.mjs"
+    },
+    {
+      "id": "alliance-phase4-status",
+      "name": "Alliance Phase 4 Status",
+      "type": "sensor",
+      "description": "Emit compact status for Alliance client-side routed views.",
+      "trigger_intents": [
+        "alliance phase 4 status",
+        "phase4 status",
+        "why is alliance one long page"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase4-status.mjs"
+    },
+    {
+      "id": "alliance-phase4-next",
+      "name": "Alliance Phase 4 Next",
+      "type": "sensor",
+      "description": "Emit compact next-action gaps for Alliance routed dashboard views.",
+      "trigger_intents": [
+        "alliance phase 4 next",
+        "phase4 next",
+        "split alliance into routes"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase4-next.mjs"
+    },
+    {
+      "id": "alliance-phase5-status",
+      "name": "Alliance Phase 5 Status",
+      "type": "sensor",
+      "description": "Emit compact status for the Alliance persistence gate after the local-file probe.",
+      "trigger_intents": [
+        "alliance phase 5 status",
+        "phase5 status",
+        "alliance persistence status"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase5-status.mjs"
+    },
+    {
+      "id": "alliance-phase5-next",
+      "name": "Alliance Phase 5 Next",
+      "type": "sensor",
+      "description": "Emit compact next-action gaps for the Alliance persistence gate.",
+      "trigger_intents": [
+        "alliance phase 5 next",
+        "phase5 next",
+        "alliance persistence next"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase5-next.mjs"
+    },
+    {
+      "id": "alliance-phase5-probe",
+      "name": "Alliance Phase 5 Persistence Probe",
+      "type": "probe",
+      "description": "POST a sandbox draft to the Alliance Zo Site and verify the service appends a local proof file.",
+      "trigger_intents": [
+        "probe alliance persistence",
+        "prove zo site writes",
+        "test alliance local persistence"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/phase5-persistence-probe.mjs"
+    },
+    {
+      "id": "alliance-supabase-apply",
+      "name": "Alliance Supabase Apply",
+      "type": "bridge",
+      "description": "Apply the Alliance Supabase core migration using Telechurch E2E Supabase credentials without printing secrets.",
+      "trigger_intents": [
+        "setup alliance supabase",
+        "apply alliance supabase",
+        "choose supabase for alliance"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/supabase-apply.mjs"
+    },
+    {
+      "id": "alliance-supabase-edge-deploy",
+      "name": "Alliance Supabase Edge Deploy",
+      "type": "bridge",
+      "description": "Stage and deploy the Alliance Supabase Edge Function from Telechurch E2E credentials without printing secrets.",
+      "trigger_intents": [
+        "deploy alliance supabase edge",
+        "alliance edge function",
+        "use edge functions for alliance supabase"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/supabase-edge-deploy.mjs"
+    },
+    {
+      "id": "alliance-sms-relay-deploy",
+      "name": "Alliance SMS Relay Deploy",
+      "type": "bridge",
+      "description": "Apply the Alliance SMS relay tables and deploy the phone-polled Supabase Edge relay without printing secrets.",
+      "trigger_intents": [
+        "deploy alliance sms relay",
+        "move sms bridge to supabase",
+        "remove computer from sms bridge",
+        "cloud phone relay"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/sms-relay-deploy.mjs"
+    },
+    {
+      "id": "alliance-supabase-env-sync",
+      "name": "Alliance Supabase Env Sync",
+      "type": "bridge",
+      "description": "Sync only Supabase Edge Function caller env keys to the Alliance Zo Site workspace without printing values.",
+      "trigger_intents": [
+        "sync alliance supabase env",
+        "ship alliance supabase secrets"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/sync-supabase-env-to-zo.mjs"
+    },
+    {
+      "id": "alliance-supabase-probe",
+      "name": "Alliance Supabase Probe",
+      "type": "probe",
+      "description": "Post through Alliance Zo and verify a Supabase row was inserted.",
+      "trigger_intents": [
+        "probe alliance supabase",
+        "verify alliance supabase",
+        "test supabase persistence"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/supabase-probe.mjs"
+    },
+    {
+      "id": "alliance-story-scope",
+      "name": "Alliance Story Scope",
+      "type": "forge",
+      "description": "Scan Alliance Story documents, convert vision points into appable programs, update the site manifest, and emit the Scoping plan.",
+      "trigger_intents": [
+        "scan alliance story",
+        "create alliance scoping plan",
+        "build alliance about page",
+        "convert alliance story into app programs"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/story-scope.mjs"
+    },
+    {
+      "id": "alliance-story-sync",
+      "name": "Alliance Story Sync",
+      "type": "bridge",
+      "description": "Sync raw Alliance Story documents, derived Scoping plan, and story authority rules to the Alliance Zo workspace.",
+      "trigger_intents": [
+        "sync alliance story docs",
+        "bring alliance story to zo",
+        "ship alliance story authority",
+        "ratify alliance ideas against story"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/sync-story-to-zo.mjs"
+    },
+    {
+      "id": "alliance-vocabulary",
+      "name": "Alliance Vocabulary",
+      "type": "artifact",
+      "description": "Generate scoped Alliance vocabulary from story and invisible-app authority so conversations can route through Script Factory intake.",
+      "trigger_intents": [
+        "build alliance vocabulary",
+        "route alliance conversations",
+        "conversation first intake",
+        "invisible app vocabulary"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/alliance-vocabulary.mjs"
+    },
+    {
       "id": "git-commit",
       "name": "Git Commit",
       "type": "forge",
       "description": "Reserved source-control forge. Disabled for autonomous Zo execution.",
-      "trigger_intents": ["commit", "push"],
+      "trigger_intents": [
+        "commit",
+        "push"
+      ],
       "status": "blocked",
       "version": "1.0.0",
       "requires_ai": false,
@@ -156,11 +752,35 @@
       "name": "Deploy Pages",
       "type": "forge",
       "description": "Reserved deployment forge. Disabled for autonomous Zo execution.",
-      "trigger_intents": ["deploy"],
+      "trigger_intents": [
+        "deploy"
+      ],
       "status": "blocked",
       "version": "1.0.0",
       "requires_ai": false,
       "script_file": "artifacts/deploy-pages.mjs"
+    },
+    {
+      "id": "assess-alliance-sites-restart-against",
+      "name": "Assess Alliance Sites Restart Against",
+      "type": "forge",
+      "description": "Auto-promoted forge for intent: Assess Alliance Sites restart against Phase 1 and identify protocol gaps after moving Alliance to Sites",
+      "trigger_intents": [
+        "assess",
+        "alliance",
+        "sites",
+        "restart",
+        "against",
+        "phase",
+        "assess alliance sites restart against phase 1 and identify protocol gaps after moving alliance to sites"
+      ],
+      "status": "active",
+      "version": "0.1.0",
+      "requires_ai": false,
+      "script_file": "artifacts/assess-alliance-sites-restart-against.mjs",
+      "auto_promoted": true,
+      "promoted_from_gap": "assess-alliance-sites-restart-against",
+      "build_trace_schema": "refer.zo.build-trace.v1"
     }
   ]
 }

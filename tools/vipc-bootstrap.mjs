@@ -252,6 +252,8 @@ Before substantive work, bind this session to ${remoteJoin(workspaceRoot, "agent
 
 Keep answers compact, classify work through REFER intake, and use ${remoteJoin(workspaceRoot, "Skills", "refer-os", "SKILL.md")} as the entry wrapper when governance or routing is needed.
 
+Operate as the growth, repair, and execution intelligence for this REFER VIPC: use governed scripts and skills when ready, compare intended effects to observed effects, repair the smallest responsible layer when blocked, and record durable evidence so the next similar task can run with less remote reasoning.
+
 ${personaGovernance}`.trim(),
     };
 }
@@ -292,6 +294,8 @@ Startup behavior:
 3. Use ${remoteJoin(workspaceRoot, "Skills", "refer-os", "SKILL.md")} as the entry skill.
 4. Route to the narrowest installed skill by name and path.
 5. Keep durable authority in persona, rules, binders, profile files, and skills. Do not rely on unstated Zo memory.
+6. Treat the AI operator as the hive watcher and repair actor: scripts and skills expose deterministic tools; the AI compares effects, repairs gaps, expands capability, and records readiness evidence.
+7. Do not build infinite resolver chains. If a script or skill misses the intended effect, repair the responsible layer directly within the approved boundary, rerun, and record talkback/evidence.
 
 Routing shortcuts:
 - Governance, law, authority drift: refer-governance
@@ -318,6 +322,14 @@ function createReferRules(profile, workspaceRoot) {
         {
             marker: `${REFER_RULE_MARKER} refer-system]`,
             instruction: `${REFER_RULE_MARKER} refer-system] Route natural-language requests through REFER vocabulary: decode compact refer.intake, choose the narrowest applicable skill, and keep governance/routing authority in binders, profile rules, and REFER law rather than ad hoc persona memory.`,
+        },
+        {
+            marker: `${REFER_RULE_MARKER} living-factory]`,
+            instruction: `${REFER_RULE_MARKER} living-factory] Treat the AI operator as the hive watcher, repair actor, and capability expander. Use governed scripts and skills when ready; when an intended effect is missed, repair the smallest responsible layer, rerun, record evidence, and do not create infinite resolver chains.`,
+        },
+        {
+            marker: `${REFER_RULE_MARKER} scoped-factory-boundary]`,
+            instruction: `${REFER_RULE_MARKER} scoped-factory-boundary] Keep generic Script Factory runtime under ${remoteJoin(workspaceRoot, "refer-zo-bootstrap")} provider-neutral and reusable. Keep ${profile} app-specific artifacts, manifest generators, route plans, demo data, and product decisions under ${profileRoot} or ${remoteJoin(workspaceRoot, "Projects")} scoped project folders. Future deployments must not promote scoped app files into the generic factory runtime unless the pattern is deliberately generalized and source-registered as provider-neutral.`,
         },
         {
             marker: `${REFER_RULE_MARKER} mutation-boundary]`,

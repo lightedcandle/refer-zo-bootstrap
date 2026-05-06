@@ -1,0 +1,20 @@
+{
+  "schema": "refer.alliance.site-build-artifact.v1",
+  "ok": true,
+  "phase": "phase1",
+  "source_manifest": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\site-manifest.json",
+  "source_data_contract": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\phase2-data-contract.json",
+  "output": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\site\\App.tsx",
+  "auth_behavior": "public_now",
+  "phase3_forms": true,
+  "generated_at": "2026-05-01T05:21:36.635Z",
+  "evidence": [
+    "site_manifest:loaded",
+    "phase2_contract:loaded",
+    "dynamic_fields:resolved",
+    "app_tsx:generated",
+    "auth_behavior:public_now",
+    "phase3_site_forms:generated",
+    "phase4_routed_views:generated"
+  ]
+}

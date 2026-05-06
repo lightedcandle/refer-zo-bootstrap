@@ -168,6 +168,24 @@ Each lane must emit one of:
 
 If a lane only produces chat prose, it did not feed the factory.
 
+For missing scripts, the Zo lane should not stop at draft when the user intent
+is valid and authorized. The expected learning loop is:
+
+```text
+missing script
+-> draft/gap record
+-> Zo AI exploratory build
+-> build trace dataset row
+-> working artifact or route
+-> distilled script/forge
+-> replay from original intent
+-> talkback and ratification note
+```
+
+The AI build is allowed to be creative and iterative inside the approved
+contract. The deterministic promise belongs to the distilled replayable script,
+not to the first exploratory pass.
+
 Contract and context pointers:
 
 - Root Script Factory contract surfaces: `..\src\contracts\referIntake.ts`, `..\src\contracts\scriptFactory.ts`, `..\.refer-factory\`.

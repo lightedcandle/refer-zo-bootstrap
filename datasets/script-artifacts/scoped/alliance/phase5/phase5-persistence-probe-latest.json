@@ -1,0 +1,46 @@
+{
+  "schema": "refer.alliance.phase5-persistence-probe.v1",
+  "generated_at": "2026-05-01T05:30:12.873Z",
+  "instance": "alliance",
+  "capability_tested": "zo_site_local_file_write",
+  "zo_dataset_api_visible": false,
+  "persistence_verdict": "zo_site_local_file_write_proven",
+  "supabase_required_now": false,
+  "probe": {
+    "before": 0,
+    "after": 1,
+    "post": {
+      "ok": true,
+      "record_id": "site-draft-1777613394653",
+      "persistence": "zo_site_local_file"
+    },
+    "status": {
+      "ok": true,
+      "persistence": "zo_site_local_file",
+      "target": "./factory/alliance-draft-proof.jsonl",
+      "dataset_write_capability": "not_proven",
+      "note": "This proves the Zo Site service can write a local proof file. It does not prove a first-class Zo Dataset API."
+    },
+    "last": {
+      "id": "site-draft-1777613394653",
+      "received_at": "2026-05-01T05:29:54.653Z",
+      "source": "alliance_phase5_persistence_probe",
+      "draft": {
+        "entity": "request",
+        "label": "Request",
+        "route": "/dashboard/requests",
+        "local_dataset": "alliance-requests",
+        "values": {
+          "request_type": "phase5_probe",
+          "summary": "local file persistence proof"
+        },
+        "status": "probe"
+      }
+    }
+  },
+  "evidence": [
+    "api_route:/api/alliance-drafts",
+    "proof_file:line_appended",
+    "zo_dataset_api:not_visible_in_mcp_tools"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "refer.alliance.supabase-probe.v1",
+  "generated_at": "2026-05-01T05:48:51.233Z",
+  "instance": "alliance",
+  "project_ref": "skqmzcdmfaijxpbvcdal",
+  "marker": "supabase_probe_1777614528839",
+  "post": {
+    "ok": true,
+    "persistence": "supabase",
+    "supabase_ok": true,
+    "edge_function": "alliance-record-write",
+    "record_id": "d7fe617c-9cd9-4867-969d-be7e38b8f188"
+  },
+  "supabase_rows_found": 1,
+  "persistence_verdict": "supabase_write_verified",
+  "evidence": [
+    "zo_site_endpoint:posted",
+    "supabase:row_found",
+    "zo:service_role_absent",
+    "edge_function:service_role_not_printed"
+  ]
+}

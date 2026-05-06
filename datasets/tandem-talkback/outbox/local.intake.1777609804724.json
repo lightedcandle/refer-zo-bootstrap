@@ -1,0 +1,83 @@
+{
+  "schema": "refer.zo.local-intake-talkback.v1",
+  "id": "local.intake.1777609804724",
+  "status": "done",
+  "prompt": "Continue Alliance Phase 1 operational hub build from manifest with public pages, role work queues, church rows, leader council, member resources, and no auth behavior",
+  "created_at": "2026-05-01T04:30:04.724Z",
+  "node_scope": {
+    "schema": "refer.zo.node-scope-resolution.v1",
+    "resolved_at": "2026-05-01T04:30:04.577Z",
+    "mode": "auto_matched",
+    "matched": [
+      {
+        "scope_id": "alliance-application-build",
+        "label": "Alliance application build",
+        "status": "active",
+        "confidence": 0.8,
+        "score": 10,
+        "categories": [
+          "alliance-hub",
+          "zo-space-routes",
+          "governed-build-intake"
+        ]
+      }
+    ],
+    "available_scope_count": 1,
+    "rule": "Local intake automatically resolves active node scopes from ordinary prompt text."
+  },
+  "registry": {
+    "normalized_path": "E:\\refer-script-factory\\refer-zo-bootstrap\\datasets\\script-registry\\normalized-registry.json",
+    "record_count": 28
+  },
+  "matched_script": {
+    "id": "alliance-site-build",
+    "name": "Alliance Site Build",
+    "type": "forge",
+    "description": "Generate the Alliance Phase 1 Zo Site source from the scoped Alliance site manifest.",
+    "trigger_intents": [
+      "alliance site build",
+      "continue alliance phase 1",
+      "build alliance site from plan",
+      "alliance sites phase 1",
+      "alliance operational hub"
+    ],
+    "status": "active",
+    "requires_ai": false,
+    "script_file": "scopes/alliance/build-site-from-manifest.mjs",
+    "version": "1.0.0",
+    "raw": {
+      "id": "alliance-site-build",
+      "name": "Alliance Site Build",
+      "type": "forge",
+      "description": "Generate the Alliance Phase 1 Zo Site source from the scoped Alliance site manifest.",
+      "trigger_intents": [
+        "alliance site build",
+        "continue alliance phase 1",
+        "build alliance site from plan",
+        "alliance sites phase 1",
+        "alliance operational hub"
+      ],
+      "status": "active",
+      "version": "1.0.0",
+      "requires_ai": false,
+      "script_file": "scopes/alliance/build-site-from-manifest.mjs",
+      "scope_rule": "Alliance-specific site content and dynamic placeholders live under scopes/alliance; generic factory runtime must remain app-neutral."
+    }
+  },
+  "execution": {
+    "ok": true,
+    "executed": true,
+    "status": "done",
+    "path": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\build-site-from-manifest.mjs",
+    "output": "{\n  \"ok\": true,\n  \"phase\": \"phase1\",\n  \"manifest\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\scopes\\\\alliance\\\\site-manifest.json\",\n  \"output\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\scopes\\\\alliance\\\\site\\\\App.tsx\",\n  \"artifact\": \"E:\\\\refer-script-factory\\\\refer-zo-bootstrap\\\\datasets\\\\script-artifacts\\\\scoped\\\\alliance\\\\site\\\\phase1-site-build-1777609804708.json\"\n}\n"
+  },
+  "script_gap": null,
+  "promotion": null,
+  "evidence": [
+    "local_intake:recorded",
+    "node_scope:auto_resolved",
+    "script_lookup:matched",
+    "script_execution:attempted"
+  ],
+  "next": "record_or_ratify_result"
+}

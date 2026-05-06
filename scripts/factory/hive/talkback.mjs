@@ -1,11 +1,12 @@
 #!/usr/bin/env node
+/**
  * @opcodes ['SEND_STATUS', 'FETCH_PENDING']
  * @trigger talkback status
  * @description Reports node status and pending chunk count back to the hive
  * @forge-type sensor
  * @forge-name Talkback
  * @forge-id talkback
-/**
+ *
  * talkback.mjs — Hive Talkback Protocol
  *
  * Implements both:
@@ -436,50 +437,7 @@ async function initSelf(id, name, zoSpaceUrl) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2);
-
-if (args.includes("--ask")) {
-  const nodeIdx = args.indexOf("--ask") + 1;
-  const nodeId = args[nodeIdx];
-  const queryIdx = args.indexOf("--query") + 1;
-  const query = queryIdx ? args.slice(queryIdx).join(" ") : '(hive :action ping)';
-  cliAsk(nodeId, query).catch(err => {
-    console.log(`(error :code "ask-failed" :message "${err.message}")`);
-    process.exit(1);
-  });
-} else if (args.includes("--ping")) {
-  const nodeIdx = args.indexOf("--ping") + 1;
-  const nodeId = args[nodeIdx] || "telechurch";
-  cliAsk(nodeId, '(hive :action ping)').catch(err => {
-    console.log(`(error :code "ping-failed" :message "${err.message}")`);
-  });
-} else if (args.includes("--install")) {
-  installTalkback().catch(err => {
-    console.log(`(error :code "install-failed" :message "${err.message}")`);
-    process.exit(1);
-  });
-} else if (args.includes("--register")) {
-  const relayIdx = args.indexOf("--register") + 1;
-  const relay = args[relayIdx] || "telechurch";
-  cliRegister(relay).catch(err => {
-    console.log(`(error :code "register-failed" :message "${err.message}")`);
-    process.exit(1);
-  });
-} else if (args.includes("--init")) {
-  const idIdx = args.indexOf("--id") + 1;
-  const nameIdx = args.indexOf("--name") + 1;
-  const urlIdx = args.indexOf("--url") + 1;
-  initSelf(
-    idIdx ? args[idIdx] : null,
-    nameIdx ? args[nameIdx] : null,
-    urlIdx ? args[urlIdx] : null
-  );
-} else if (args.includes("--status")) {
-  const self = loadSelf();
-  const nodes = loadNodes();
-  console.log(`(hive :self ${self ? JSON.stringify(self) : "null"} :nodes ${nodes.nodes.length} :active ${nodes.nodes.filter(n => n.active).length})`);
-} else {
-  // Default: show help
+function printHelp() {
   console.log(`Usage:
   node talkback.mjs --ask <nodeId> --query "<S-expression>"
   node talkback.mjs --ping <nodeId>
@@ -496,4 +454,50 @@ Environment:
 `);
 }
 
-export default { askNode, handleIncomingRequest, parseSexpr };
+async function main(args = process.argv.slice(2)) {
+  if (args.includes("--ask")) {
+    const nodeIdx = args.indexOf("--ask") + 1;
+    const nodeId = args[nodeIdx];
+    const queryIdx = args.indexOf("--query") + 1;
+    const query = queryIdx ? args.slice(queryIdx).join(" ") : '(hive :action ping)';
+    return cliAsk(nodeId, query);
+  }
+  if (args.includes("--ping")) {
+    const nodeIdx = args.indexOf("--ping") + 1;
+    const nodeId = args[nodeIdx] || "telechurch";
+    return cliAsk(nodeId, '(hive :action ping)');
+  }
+  if (args.includes("--install")) return installTalkback();
+  if (args.includes("--register")) {
+    const relayIdx = args.indexOf("--register") + 1;
+    const relay = args[relayIdx] || "telechurch";
+    return cliRegister(relay);
+  }
+  if (args.includes("--init")) {
+    const idIdx = args.indexOf("--id") + 1;
+    const nameIdx = args.indexOf("--name") + 1;
+    const urlIdx = args.indexOf("--url") + 1;
+    return initSelf(
+      idIdx ? args[idIdx] : null,
+      nameIdx ? args[nameIdx] : null,
+      urlIdx ? args[urlIdx] : null
+    );
+  }
+  if (args.includes("--status")) {
+    const self = loadSelf();
+    const nodes = loadNodes();
+    console.log(`(hive :self ${self ? JSON.stringify(self) : "null"} :nodes ${nodes.nodes.length} :active ${nodes.nodes.filter(n => n.active).length})`);
+    return;
+  }
+  printHelp();
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  main().catch(err => {
+    console.log(`(error :code "talkback-failed" :message "${err.message}")`);
+    process.exit(1);
+  });
+}
+
+export { askNode, handleIncomingRequest, parseSexpr, main };
+export default { askNode, handleIncomingRequest, parseSexpr, main };

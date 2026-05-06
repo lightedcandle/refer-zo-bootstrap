@@ -1,0 +1,27 @@
+{
+  "schema": "refer.alliance.phase1-status.v1",
+  "generated_at": "2026-05-01T04:46:47.093Z",
+  "phase": "phase1",
+  "source_manifest": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\site-manifest.json",
+  "generated_app_present": true,
+  "auth_behavior": "public_now",
+  "public_until_auth_last": true,
+  "counts": {
+    "roles": 4,
+    "access_cards": 4,
+    "modules": 8,
+    "today_items": 4,
+    "churches": 6,
+    "gatherings": 5,
+    "documents": 6,
+    "work_queues": 8,
+    "pastor_council": 6,
+    "member_resources": 6,
+    "forms": 6
+  },
+  "evidence": [
+    "phase1_manifest:present",
+    "generated_app:present",
+    "auth:public_now"
+  ]
+}

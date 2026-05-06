@@ -43,6 +43,7 @@ export function matchScript(prompt, registry = loadRegistry()) {
   const text = String(prompt || "").toLowerCase();
   const matches = registry.records
     .filter((record) => !["deprecated", "retired", "blocked"].includes(record.status))
+    .filter((record) => record.script_file && !["gate", "request-type"].includes(String(record.type || "").toLowerCase()))
     .map((record) => ({ record, score: scoreRecord(record, text) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
@@ -64,7 +65,14 @@ export function scaffoldScriptGap({ prompt, scopeResolution = null, registry = l
     trigger_intents: triggerIntents(prompt),
     script_file: scriptFile,
     requires_ai: false,
-    next: "Review this draft, implement the bounded script, register it, then rerun intake.",
+    promotion_path: [
+      "authorized_ai_exploratory_build",
+      "record_build_trace",
+      "distill_repeatable_script",
+      "replay_from_original_intent",
+      "register_and_ratify",
+    ],
+    next: "Use this draft as the launch point for an authorized AI build, record the working trace, distill a repeatable script, replay it, register it, then rerun intake.",
   };
   mkdirSync(DRAFT_DIR, { recursive: true });
   const draftPath = join(DRAFT_DIR, `${id}.json`);

@@ -1,0 +1,30 @@
+{
+  "name": "build-traces",
+  "title": "Zo AI Build Traces",
+  "description": "Records AI exploratory builds that are later distilled into deterministic Script Factory forges.",
+  "schema": "refer.zo.build-trace.v1",
+  "records": "records/*.json",
+  "fields": [
+    "id",
+    "intent_id",
+    "script_gap_id",
+    "prompt",
+    "target_scope",
+    "changed",
+    "errors",
+    "fixes",
+    "checks",
+    "distilled_script",
+    "replay",
+    "talkback",
+    "status"
+  ],
+  "statuses": [
+    "exploring",
+    "working",
+    "distilled",
+    "replayed",
+    "ratified",
+    "blocked"
+  ]
+}

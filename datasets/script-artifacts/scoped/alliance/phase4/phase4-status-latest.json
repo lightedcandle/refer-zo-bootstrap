@@ -1,0 +1,15 @@
+{
+  "schema": "refer.alliance.phase4-status.v1",
+  "generated_at": "2026-05-01T05:21:42.941Z",
+  "phase": "phase4",
+  "generated_app_present": true,
+  "routed_views_present": true,
+  "hash_navigation_present": true,
+  "view_count": 5,
+  "visible_model": "one_active_view_at_a_time",
+  "evidence": [
+    "phase4_routed_views:present",
+    "active_view_conditionals:present",
+    "hash_navigation:present"
+  ]
+}

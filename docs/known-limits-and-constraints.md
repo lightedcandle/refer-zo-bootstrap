@@ -83,6 +83,72 @@ Update this file whenever a tool, provider, transport path, script, runner, pack
 - Script/doc now encoding mitigation: `scripts/factory/sync-tandem-runtime-to-zo.mjs`
 - Verification: `npm run tandem:sync-runtime -- --instance telechurch --file scripts/factory/backfill-zo-local-usage.mjs --check`
 
+### Large Zo Full-Bundle Syncs Can Terminate Internally
+
+- Date: 2026-04-30
+- Domain/provider: Zo MCP / tandem runtime sync
+- Operation: syncing the full updated tandem runtime bundle to Alliance with `--preset all --check --json`
+- Symptom: MCP upload failed with `create_or_rewrite_file failed: modal-http: internal error: function was terminated by signal`
+- Likely cause: full-bundle upload size/duration exceeded a provider execution limit during repeated `create_or_rewrite_file` calls
+- Mitigation: sync changed files narrowly with repeated `--file <path>` arguments, then run `--check`
+- Script/doc now encoding mitigation: root `docs/known-limits-and-constraints.md`, this file
+- Verification: narrow changed-file Alliance sync completed and remote syntax check returned `returncode=0`
+
+### Zo Read File Can Truncate Long Generated Manifests
+
+- Date: 2026-05-01
+- Domain/provider: Zo MCP / Alliance script artifacts
+- Operation: reading generated Phase 3 modal manifests from Zo Files with `read_file`
+- Symptom: manifest output was returned as head/tail text and JSON parsing failed with `Bad control character in string literal`
+- Likely cause: large generated JSON containing multiline JSX exceeded the Zo file read display budget
+- Mitigation: generate large scoped manifests in the app scope, then feed the manifest directory to the generic route-manifest bridge
+- Script/doc now encoding mitigation: `scripts/factory/route-manifest-bridge.mjs`, `docs/scoped-app-boundary.md`
+- Verification: `npm run route:manifest-bridge -- --instance alliance --dry-run --json --manifest-command "node scopes/alliance/phase3-manifest.mjs" --manifest-dir <scoped manifest dir>` completed after switching away from Zo manifest readback
+
+### Zo Managed Service Entrypoints Are Not Shell Commands
+
+- Date: 2026-05-01
+- Domain/provider: Zo managed services / Alliance Zo Site
+- Operation: restarting the public `alliance` site service
+- Symptom: entrypoint `NODE_ENV=production bun run server.ts` crashed and the public URL returned HTTP 520
+- Likely cause: supervisord executes service entrypoints directly rather than through a shell, so inline environment assignments are not interpreted
+- Mitigation: use a direct command such as `bun run server.ts`, and run `bun run build` from the scoped site sync script before restarting the service
+- Script/doc now encoding mitigation: `scopes/alliance/sync-site-to-zo.mjs`, this ledger
+- Verification: `service_doctor` for `alliance` reported `RUNNING`, `port: 51303`, and `code: up to date`
+
+### Sequential Phase Status/Next Dependencies
+
+- Date: 2026-05-01
+- Domain/provider: Alliance scoped phase scripts
+- Operation: running `alliance:phase5-status` and `alliance:phase5-next` concurrently
+- Symptom: `phase5-next` reported stale gaps because it read `phase5-status-latest.json` before the status script rewrote it
+- Likely cause: next-action sensors that depend on latest status artifacts are not concurrency-safe
+- Mitigation: run status scripts before next scripts when the next script reads the status artifact
+- Script/doc now encoding mitigation: this ledger
+- Verification: reran `npm run alliance:phase5-next` after `npm run alliance:phase5-status`; packet returned `ready_for_next_phase: true`
+
+### Supabase Secrets Cannot Use SUPABASE_ Prefix
+
+- Date: 2026-05-01
+- Domain/provider: Supabase CLI / Edge Functions
+- Operation: deploying Alliance `alliance-record-write` Edge Function secrets
+- Symptom: `supabase secrets set` skipped `SUPABASE_SERVICE_ROLE_KEY` with `Env name cannot start with SUPABASE_`
+- Likely cause: Supabase reserves the `SUPABASE_` env prefix for platform-provided variables
+- Mitigation: set `SERVICE_ROLE_KEY` as the Edge Function service role secret and keep `SUPABASE_URL` platform-provided; Zo receives only URL, anon key, and function name
+- Script/doc now encoding mitigation: `scopes/alliance/supabase-edge-deploy.mjs`, `scopes/alliance/supabase/functions/alliance-record-write/index.ts`
+- Verification: `npm run alliance:supabase-edge-deploy -- --deploy`; `npm run alliance:supabase-probe -- --instance alliance`
+
+### Telechurch E2E Git Status Can Fail On Corrupt/Missing Tree
+
+- Date: 2026-05-01
+- Domain/provider: Git / `E:\telechurch-e2e`
+- Operation: checking Telechurch E2E worktree status after staging an Alliance Edge Function copy
+- Symptom: `git status --short` failed with `fatal: unable to read tree (...)`
+- Likely cause: the local Telechurch E2E repository has a missing or corrupt Git object
+- Mitigation: do not rely on that repo's Git status until the object store is repaired or the repo is recloned; keep Alliance authoritative source under `refer-zo-bootstrap/scopes/alliance/`
+- Script/doc now encoding mitigation: this ledger
+- Verification: Alliance Edge Function source is tracked in `scopes/alliance/supabase/functions/alliance-record-write/index.ts` and deploy artifact records the copied Telechurch path
+
 ### Verification Scripts Can Miss Runtime Files
 
 - Date: 2026-04-29
@@ -148,3 +214,36 @@ Update this file whenever a tool, provider, transport path, script, runner, pack
 - Mitigation: run hive registry writes sequentially; if parallel writes happen, inspect `npm run hive:registry -- --json` and reapply missing evidence
 - Script/doc now encoding mitigation: root `docs/known-limits-and-constraints.md`, this file
 - Verification: rechecked registry after parallel heartbeat writes and reapplied the Telechurch rectification evidence sequentially
+
+### Nested Zo Token Files Can Drift From Root Tokens
+
+- Date: 2026-04-30
+- Domain/provider: Zo MCP / nested Zo bootstrap repo
+- Operation: syncing Telechurch with `sync-tandem-runtime-to-zo.mjs --instance telechurch --check`
+- Symptom: the nested repo token returned `Authentication failed: 401: Invalid API key`, while the parent private token succeeded
+- Likely cause: ignored nested `.env.local` / `.env.master` can become stale independently from the root private token source
+- Mitigation: inject the current parent token into the process environment without printing it, or refresh this repo's ignored local env file
+- Script/doc now encoding mitigation: root `docs/known-limits-and-constraints.md`, this file
+- Verification: parent-token bridged Telechurch sync completed with remote syntax check `returncode=0`
+
+### Hive Dispatcher Packaging Must Be Cross-Platform
+
+- Date: 2026-04-30
+- Domain/provider: Zo bootstrap packaging / Windows PowerShell
+- Operation: building the upstream hive bundle with `node scripts/factory/hive/dispatcher.mjs package --type=hive`
+- Symptom: packaging failed because Unix `cp` was not available on Windows
+- Likely cause: dispatcher used shell-specific `cp` and `find` instead of Node filesystem APIs, and its repo root resolved to `scripts/`
+- Mitigation: package through Node `cpSync`/recursive traversal, use a temp directory outside the repo, and keep only `tar` as the archive command
+- Script/doc now encoding mitigation: `scripts/factory/hive/dispatcher.mjs`, this file
+- Verification: hive and cell packages built successfully on Windows
+
+### Alliance Bootstrap Verify Can Exceed Chat Command Timeout
+
+- Date: 2026-04-30
+- Domain/provider: Zo MCP / Alliance bootstrap verification
+- Operation: `node tools/vipc-bootstrap.mjs --profile alliance --instance alliance --mode verify`
+- Symptom: local command timed out before returning a verifier result
+- Likely cause: full bootstrap verification can take longer than the current chat command timeout or wait on slow MCP file/API calls
+- Mitigation: verify live build state with bounded MCP probes (`list_space_routes`, `get_space_errors`, targeted `get_space_route`, and `list_files`) while rerunning full bootstrap verification with a longer out-of-band timeout when needed
+- Script/doc now encoding mitigation: root and nested known-limits ledgers
+- Verification: Alliance MCP probes returned app routes, clean space errors, route source for `/` and `/organizations`, and workspace files including `Skills/`, `REFER.OS/`, datasets, and `refer-zo-bootstrap/`

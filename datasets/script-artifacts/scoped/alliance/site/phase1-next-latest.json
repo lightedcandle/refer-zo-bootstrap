@@ -1,0 +1,13 @@
+{
+  "schema": "refer.alliance.phase1-next.v1",
+  "generated_at": "2026-05-01T04:46:47.096Z",
+  "phase": "phase1",
+  "auth_rule": "Keep all behavior public for Phase 1; only show a sign-in-later note.",
+  "next_actions": [],
+  "gaps": [],
+  "ready_for_next_phase": true,
+  "evidence": [
+    "manifest:checked",
+    "phase1_content:minima_met"
+  ]
+}

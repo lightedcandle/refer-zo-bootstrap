@@ -1,0 +1,29 @@
+{
+  "schema": "refer.alliance.phase2-status.v1",
+  "generated_at": "2026-05-01T12:38:42.236Z",
+  "phase": "phase2",
+  "source_contract": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\phase2-data-contract.json",
+  "contract_present": true,
+  "persistence_strategy": "supabase_edge_selected",
+  "auth_behavior": "public_read_mock_write",
+  "counts": {
+    "entities": 9,
+    "roles": 5,
+    "routes": 9,
+    "datasets": 9,
+    "supabase_decision_gates": 4
+  },
+  "minimums": {
+    "entities": 8,
+    "roles": 5,
+    "routes": 8,
+    "datasets": 8,
+    "supabase_decision_gates": 4
+  },
+  "evidence": [
+    "phase2_contract:present",
+    "persistence:supabase_edge_selected",
+    "auth:public_read_mock_write",
+    "supabase_gates:declared"
+  ]
+}

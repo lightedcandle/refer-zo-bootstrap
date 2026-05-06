@@ -1,0 +1,21 @@
+{
+  "schema": "refer.alliance.supabase-apply.v1",
+  "generated_at": "2026-05-01T05:39:04.219Z",
+  "migration": "E:\\refer-script-factory\\refer-zo-bootstrap\\scopes\\alliance\\supabase\\001_alliance_core.sql",
+  "env_source": "E:\\telechurch-e2e\\.env.master",
+  "project_ref": "skqmzcdmfaijxpbvcdal",
+  "applied": true,
+  "verified": true,
+  "evidence": [
+    "migration:loaded",
+    "env:loaded_without_printing_secrets",
+    "migration:applied",
+    "rls:enabled"
+  ],
+  "verification": {
+    "records_exists": true,
+    "audit_exists": true,
+    "records_rls": true,
+    "audit_rls": true
+  }
+}

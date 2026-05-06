@@ -17,8 +17,8 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, dirname, basename } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { store } from "./dataset-store.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -106,16 +106,16 @@ async function tick() {
 
   for (const carPath of cars) {
     try {
-      const mod = await import(carPath);
+      const mod = await import(pathToFileURL(carPath).href);
       const run = typeof mod.default === "function" ? mod.default
               : mod.default && typeof mod.default.run === "function" ? mod.default.run
               : typeof mod.run === "function" ? mod.run : null;
       if (!run) {
-        warnings.push(`car ${carPath.split("/").pop()} has no run() export — skipped`);
+        warnings.push(`car ${basename(carPath)} has no run() export - skipped`);
         continue;
       }
 
-      const carName = carPath.split("/").pop().replace(".mjs", "");
+      const carName = basename(carPath, ".mjs");
       const carState = { ...state };
 
       const result = await run(carState, meta);
@@ -140,7 +140,7 @@ async function tick() {
       if (result?.halt) { continue_chain = false; carResult.note = "halted chain"; break; }
 
     } catch (err) {
-      results.push({ car: carPath.split("/").pop(), status: "error", error: err.message });
+      results.push({ car: basename(carPath), status: "error", error: err.message });
     }
   }
 

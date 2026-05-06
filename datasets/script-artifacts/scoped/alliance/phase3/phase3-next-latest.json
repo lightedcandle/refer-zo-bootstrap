@@ -1,0 +1,14 @@
+{
+  "schema": "refer.alliance.phase3-next.v1",
+  "generated_at": "2026-05-01T05:15:42.914Z",
+  "phase": "phase3",
+  "rule": "Phase 3 creates browser-local drafts only. Do not persist user data or add auth until Phase 5.",
+  "next_actions": [],
+  "gaps": [],
+  "ready_for_next_phase": true,
+  "next_phase": "Prove whether Zo Sites can write to a Zo Dataset, then choose local dataset writes or Supabase.",
+  "evidence": [
+    "app:checked",
+    "phase3_forms:minima_met"
+  ]
+}

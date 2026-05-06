@@ -1,8 +1,8 @@
 # Factory Topology
 
-This project currently involves three factory surfaces. Treat each as an active factory, not just inert source code.
+This project currently involves source factories plus live Zo hive nodes. Treat each as an active factory, not just inert source code.
 
-## The Three Factories
+## The Factory Surfaces
 
 1. `refer-script-factory`
    - Scope: Codex, VS Code, typed contracts, provider-neutral Script Factory doctrine.
@@ -12,9 +12,17 @@ This project currently involves three factory surfaces. Treat each as an active 
    - Scope: Zo computers, hive bootstrap, deployment, persona/rule binding, dispatch, talkback, heartbeat, datasets.
    - Current role: Zo-scoped source factory that packages what live Zo proves.
 
-3. Telechurch Zo
+3. ApostleJ Zo
+   - Scope: original hive deployment/distribution node restored from early hive deployment history.
+   - Current role: hive node that should receive shared reusable factory runtime when hive-wide behavior changes.
+
+4. Telechurch Zo
    - Scope: instantiated live hive computer.
    - Current role: proving instance where Zo-native automation, chat, files, personas, rules, and datasets can demonstrate behavior.
+
+5. Alliance Zo
+   - Scope: instantiated app-build hive computer.
+   - Current role: Alliance scoped application build node.
 
 ## Repo vs Instantiated Factory
 
@@ -72,6 +80,10 @@ prompt
 ```
 
 The typed contract is authority. Compression is transport. Talkback is evidence. Source commits are ratification.
+
+Deployment bundles must also carry the expandable scriptionary. A Zo node is not fully deployed if `scripts/factory/scriptionary.json` or its updater `scripts/factory/script-dictionary.mjs` is missing from the shipped runtime. Users should never need to know the internal vocabulary, but every deployed factory needs the same terminology authority behind the scenes.
+
+Generic factory runtime and scoped app build artifacts must remain separate. Keep reusable transport, bridge, registry, heartbeat, contract, and verification scripts under `refer-zo-bootstrap`; keep app-specific route manifests, demo data, labels, and product decisions under the profile or `Projects/<AppName>` folder. See `docs/scoped-app-boundary.md`.
 
 ## Simulation
 
@@ -151,6 +163,9 @@ ordinary prompt
 -> local-script-registry.mjs
 -> executable script if present
 -> script-gap draft if missing
+-> authorized Zo AI exploratory build
+-> build trace
+-> script distillation and replay
 -> talkback packet
 ```
 
@@ -170,6 +185,60 @@ datasets/local-intake/inbox/
 
 The automation script is currently a non-persistent tick. A Zo-native persistent automation may call the same command, but the command itself is the ratified local executable path.
 
+## AI Build To Script Canonicalization
+
+Zo is a capable AI builder. The Script Factory should not treat missing scripts
+as a reason to prevent Zo from solving the user's valid intent. Scripts exist to
+canonicalize a build that worked, make it duplicable, and remove the need to
+solve the same class of work from scratch again.
+
+When local intake reports `needs_script`, the draft should move through this
+promotion path:
+
+```text
+script-gap draft
+-> Zo AI builds the first working result
+-> build trace records changed artifacts, errors, fixes, and checks
+-> script distiller extracts inputs, outputs, and repeatable operations
+-> script replay proves deterministic output for the original intent
+-> registry marks the script active or ratified
+```
+
+Drafts are therefore launch points, not terminal storage. A draft may remain
+paused only when the intent is unsafe, lacks approval, lacks required target
+information, or requires a human decision.
+
+Gap resolution belongs in the user request path. A normal user prompt should
+not return a visible "gap" response merely because the factory has not seen that
+intent before. Before Script Factory, every prompt was effectively a gap; with
+Script Factory, the difference is that the first response also records and
+canonicalizes the new path for reuse.
+
+Required intake behavior:
+
+```text
+user prompt
+-> local intake
+-> registry lookup
+-> run script if present
+-> immediately promote/build if missing
+-> replay/check
+-> return user result and talkback
+```
+
+The heartbeat/evolution loop is a recovery and maintenance sweep for drafts
+left by interrupted or blocked work. It is not the primary path for satisfying a
+user request.
+
+Recommended dataset targets:
+
+```text
+datasets/build-traces/records/
+datasets/script-artifacts/records/
+datasets/script-registry/drafts/
+datasets/tandem-talkback/outbox/
+```
+
 ## Self-Evolution Tick
 
 The self-evolution layer is bounded and evidence-first. It does not claim to author finished product logic without review. It can:
@@ -178,6 +247,7 @@ The self-evolution layer is bounded and evidence-first. It does not claim to aut
 - audit registry records;
 - record missing executable scripts;
 - optionally create not-implemented placeholders for missing registry executables;
+- surface draft promotion candidates for Zo AI build and script distillation;
 - write evolution events and talkback.
 
 Use:
