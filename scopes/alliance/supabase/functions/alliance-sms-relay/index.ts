@@ -207,6 +207,8 @@ async function advanceProfileIntake(from: string, inboundBody: string) {
   if (isCompletedProfileContext(existing)) {
     const known = await routeRegisteredSmsIntent(phone, inbound, existing);
     if (known) return known;
+    const formula = await routeHubFormulaIntent(phone, inbound);
+    if (formula) return formula;
     return recordSmsIntakeGap(phone, inbound, "registered_phone_unknown_intent");
   }
 
@@ -393,6 +395,9 @@ async function routeRegisteredSmsIntent(phone: string, inbound: string, context:
 
   const stub = stubIntent(normalized);
   if (!stub) return null;
+
+  const formula = await routeHubFormulaIntent(phone, inbound, normalized);
+  if (formula) return formula;
 
   await recordNotificationInterest(phone, inbound, stub.section, stub.script_id);
   const delivery = await queueSms(phone, sectionStubReply, {
@@ -652,6 +657,71 @@ async function routeEventsIntent(phone: string, inbound: string, normalized?: st
     outbound: message,
     delivery,
   };
+}
+
+async function routeHubFormulaIntent(phone: string, inbound: string, normalized?: string) {
+  const clean = normalized || normalizeSmsIntentText(inbound);
+  try {
+    const response = await fetch(`${hubBaseUrl}/phone/inbound`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Dispatcher-Token": relayToken,
+      },
+      body: JSON.stringify({
+        from: phone,
+        body: inbound,
+        date: Date.now(),
+        registered: true,
+        phone,
+        transport: "cloud_relay",
+      }),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.ok) return null;
+
+    const outbound = String(
+      body.response_text
+        || body.clarification_question
+        || body.error
+        || body.response
+        || sectionStubReply,
+    ).trim();
+
+    if (!outbound) return null;
+
+    const delivery = await queueSms(phone, outbound, {
+      source: "alliance_sms_hub_formula",
+      script_id: "alliance.formula.intake.v1",
+      router_script_id: "alliance.sms_router.v1",
+      normalized_body: clean,
+      response_kind: body.response_kind || "",
+      execution_mode: body.execution_mode || "",
+      clarification_token: body.clarification_token || "",
+      formula_id: body.formula?.formula_id || "",
+    });
+    await recordSmsRouteDecision(phone, inbound, {
+      script_id: "alliance.formula.intake.v1",
+      normalized_body: clean,
+      response: outbound,
+      response_kind: body.response_kind || "",
+      execution_mode: body.execution_mode || "",
+      clarification_token: body.clarification_token || "",
+      formula_id: body.formula?.formula_id || "",
+    });
+    return {
+      ok: true,
+      routed: true,
+      reason: body.response_kind === "clarify" ? "formula_clarify" : "formula_response",
+      script_id: "alliance.formula.intake.v1",
+      router_script_id: "alliance.sms_router.v1",
+      outbound,
+      delivery,
+      hub: body,
+    };
+  } catch (_error) {
+    return null;
+  }
 }
 
 function suggestSmsScriptId(normalized: string) {
