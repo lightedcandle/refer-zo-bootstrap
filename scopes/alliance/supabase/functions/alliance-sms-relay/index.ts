@@ -54,6 +54,16 @@ Deno.serve(async (req) => {
       return json(await recordInbound(required(body.from, "from"), required(body.body, "body"), body.date));
     }
 
+    if (route === "/phone/pulse" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      return json(await forwardPulse({
+        bridge: String(url.searchParams.get("bridge") || body.bridge || ""),
+        type: String(body.type || "minute"),
+        timestamp: Number(body.timestamp || Date.now()),
+        battery: body.battery,
+      }));
+    }
+
     if (route === "/sms/latest" && req.method === "GET") {
       return json(await latestInbound(required(url.searchParams.get("from"), "from")));
     }
@@ -172,6 +182,65 @@ async function latestInbound(from: string) {
   const rows = await rest(`/alliance_sms_inbox?from_phone=ilike.*${encodeURIComponent(digits)}&order=message_date.desc&limit=1&select=id,from_phone,body,message_date,received_at`);
   const message = Array.isArray(rows) ? rows[0] : null;
   return { ok: true, message };
+}
+
+async function forwardPulse(input: { bridge: string; type: string; timestamp: number; battery?: unknown }) {
+  const bridge = onlyDigits(input.bridge);
+  const payload = {
+    type: input.type || "minute",
+    bridge,
+    timestamp: Number.isFinite(input.timestamp) ? input.timestamp : Date.now(),
+    battery: input.battery,
+    transport: "cloud_relay",
+  };
+
+  const hubResponse = await fetch(`${hubBaseUrl}/phone/pulse`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Dispatcher-Token": relayToken,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const hubBody = await hubResponse.json().catch(() => null);
+  await rest("/alliance_records?select=id", {
+    method: "POST",
+    body: {
+      entity: "sms_message",
+      label: `SMS pulse ${bridge || "unknown"}`,
+      route: "alliance-sms-relay:/phone/pulse",
+      local_dataset: "alliance-sms-relay",
+      status: hubResponse.ok ? "received" : "failed",
+      values: {
+        direction: "pulse",
+        phone: bridge || null,
+        body: JSON.stringify(payload),
+        source: "alliance_sms_relay_edge",
+        recorded_at: new Date().toISOString(),
+        response_status: hubResponse.status,
+        response_body: hubBody,
+      },
+    },
+  });
+
+  if (!hubResponse.ok || !hubBody?.ok) {
+    return {
+      ok: false,
+      forwarded: false,
+      bridge: bridge || null,
+      hub_status: hubResponse.status,
+      hub: hubBody,
+    };
+  }
+
+  return {
+    ok: true,
+    forwarded: true,
+    bridge: bridge || null,
+    hub_status: hubResponse.status,
+    hub: hubBody,
+  };
 }
 
 async function writeRecord(direction: string, phone: string, body: string, values: Record<string, unknown>) {
