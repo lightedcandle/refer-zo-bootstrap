@@ -1,6 +1,6 @@
 {
   "schema": "refer.alliance.sms-relay-deploy.v1",
-  "generated_at": "2026-05-06T17:50:30.019Z",
+  "generated_at": "2026-05-07T12:40:18.330Z",
   "project_ref": "skqmzcdmfaijxpbvcdal",
   "function_name": "alliance-sms-relay",
   "migration": {

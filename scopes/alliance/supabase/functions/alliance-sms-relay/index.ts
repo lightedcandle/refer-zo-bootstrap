@@ -13,7 +13,7 @@ const profileFormBaseUrl = trimSlash(Deno.env.get("ALLIANCE_PROFILE_FORM_BASE_UR
 const hubBaseUrl = trimSlash(profileFormBaseUrl.replace(/\/profile$/, ""));
 const profileFormSecret = Deno.env.get("ALLIANCE_PROFILE_FORM_SECRET") || relayToken;
 const bridgePhoneNumber = onlyDigits(Deno.env.get("ALLIANCE_BRIDGE_PHONE_NUMBER") || "");
-const unknownIntentReply = "I'm not sure about that one yet. You can find a full guide on how to use the Alliance Hub here:\nhttps://alliance.telechurchlive.com/help";
+const unknownIntentReply = "I’m learning this request now and will shape it into a known Alliance route.";
 const sectionStubReply = "Ok, we're still working on that section. We'll let you know once it is ready.";
 const eventsApiUrl = trimSlash(Deno.env.get("ALLIANCE_EVENTS_API_URL") || `${hubBaseUrl}/api/events?canonical=true`);
 
@@ -555,6 +555,9 @@ async function recordSmsIntakeGap(phone: string, inbound: string, reason: string
     created_at: nowIso,
   };
 
+  const formula = await routeHubFormulaIntent(phone, inbound, normalized);
+  if (formula) return formula;
+
   const inserted = await rest("/alliance_records?select=id,entity,label,status,values", {
     method: "POST",
     body: {
@@ -567,13 +570,6 @@ async function recordSmsIntakeGap(phone: string, inbound: string, reason: string
     },
   });
   const gap = Array.isArray(inserted) ? inserted[0] : inserted;
-  const delivery = await queueSms(phone, unknownIntentReply, {
-    source: "alliance_sms_unknown_intent",
-    script_id: "alliance.sms_unknown_intent.v1",
-    router_script_id: "alliance.sms_router.v1",
-    intake_gap_id: gap?.id,
-    suggested_script_id: suggestedScriptId,
-  });
 
   return {
     ok: true,
@@ -582,9 +578,12 @@ async function recordSmsIntakeGap(phone: string, inbound: string, reason: string
     script_id: "alliance.sms_unknown_intent.v1",
     router_script_id: "alliance.sms_router.v1",
     suggested_script_id: suggestedScriptId,
-    outbound: unknownIntentReply,
     intake_gap: gap,
-    delivery,
+    delivery: {
+      ok: true,
+      skipped: true,
+      reason: "ai_handoff_only",
+    },
   };
 }
 
