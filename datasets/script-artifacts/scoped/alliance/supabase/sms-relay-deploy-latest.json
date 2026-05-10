@@ -1,16 +1,25 @@
 {
   "schema": "refer.alliance.sms-relay-deploy.v1",
-  "generated_at": "2026-05-07T12:40:18.330Z",
+  "generated_at": "2026-05-10T03:34:30.034Z",
   "project_ref": "skqmzcdmfaijxpbvcdal",
   "function_name": "alliance-sms-relay",
   "migration": {
-    "applied": false
+    "applied": true,
+    "verification": {
+      "outbox_exists": true,
+      "inbox_exists": true,
+      "events_exists": true,
+      "outbox_rls": true,
+      "inbox_rls": true,
+      "events_rls": true
+    }
   },
   "deployed": true,
   "secret_values_printed": false,
   "evidence": [
     "env:loaded_without_printing_secrets",
-    "relay_token:loaded_without_printing"
+    "relay_token:loaded_without_printing",
+    "sms_migration:applied"
   ],
   "results": [
     {
