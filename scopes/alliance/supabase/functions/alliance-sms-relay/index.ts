@@ -758,16 +758,6 @@ async function routeHubFormulaIntent(phone: string, inbound: string, normalized?
 
     if (!outbound) return null;
 
-    const delivery = await queueSms(phone, outbound, {
-      source: "alliance_sms_hub_formula",
-      script_id: "alliance.formula.intake.v1",
-      router_script_id: "alliance.sms_router.v1",
-      normalized_body: clean,
-      response_kind: body.response_kind || "",
-      execution_mode: body.execution_mode || "",
-      clarification_token: body.clarification_token || "",
-      formula_id: body.formula?.formula_id || "",
-    });
     await recordSmsRouteDecision(phone, inbound, {
       script_id: "alliance.formula.intake.v1",
       normalized_body: clean,
@@ -784,7 +774,11 @@ async function routeHubFormulaIntent(phone: string, inbound: string, normalized?
       script_id: "alliance.formula.intake.v1",
       router_script_id: "alliance.sms_router.v1",
       outbound,
-      delivery,
+      delivery: {
+        ok: true,
+        skipped: true,
+        reason: "hub_response_already_queued",
+      },
       hub: body,
     };
   } catch (_error) {
