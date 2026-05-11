@@ -16,6 +16,11 @@ const bridgePhoneNumber = onlyDigits(Deno.env.get("ALLIANCE_BRIDGE_PHONE_NUMBER"
 const unknownIntentReply = "I’m learning this request now and will shape it into a known Alliance route.";
 const sectionStubReply = "Ok, we're still working on that section. We'll let you know once it is ready.";
 const eventsApiUrl = trimSlash(Deno.env.get("ALLIANCE_EVENTS_API_URL") || `${hubBaseUrl}/api/events?canonical=true`);
+const regexPilotPhones = parsePilotPhones(
+  Deno.env.get("ALLIANCE_REGEX_TEST_PHONES")
+    || Deno.env.get("ALLIANCE_REGEX_TEST_PHONE")
+    || "9379854448",
+);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
@@ -693,6 +698,10 @@ function parseEventTime(value: unknown) {
 
 async function routePublicSmsIntent(phone: string, inbound: string) {
   const normalized = normalizeSmsIntentText(inbound);
+  if (isRegexPilotPhone(phone)) {
+    const regexRoute = await routeHubFormulaIntent(phone, inbound, normalized);
+    if (regexRoute) return regexRoute;
+  }
   return routeEventsIntent(phone, inbound, normalized);
 }
 
@@ -1095,6 +1104,20 @@ function shortCode() {
 
 function trimSlash(value: string) {
   return String(value || "").replace(/\/$/, "");
+}
+
+function parsePilotPhones(value: string) {
+  return new Set(
+    String(value || "")
+      .split(/[,\s]+/)
+      .map((item) => onlyDigits(item))
+      .filter((item) => item.length >= 10 && item.length <= 15),
+  );
+}
+
+function isRegexPilotPhone(phone: string) {
+  const digits = onlyDigits(phone);
+  return regexPilotPhones.has(digits);
 }
 
 function isBridgeSelfPhone(from: string) {
