@@ -140,6 +140,62 @@ async function reportJob(id: string, status: string, error?: unknown) {
   return { ok: true, event: Array.isArray(event) ? event[0] : event };
 }
 
+// Carrier consent keywords. Whole-message match only, never a substring, so a
+// sentence containing "stop" never unsubscribes anybody. Kept byte-identical to
+// the normalization in Alliance Hub and Telechurch's sms-bridge-inbound: if the
+// three disagree, one acts on a keyword another ignores.
+const SMS_CONSENT_KEYWORDS = new Set([
+  "stop", "stopall", "unsubscribe", "cancel", "end", "quit",
+  "start", "unstop", "yes",
+]);
+
+function isSmsConsentKeyword(body: string) {
+  const normalized = String(body || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return SMS_CONSENT_KEYWORDS.has(normalized);
+}
+
+/**
+ * Hands a consent keyword to Alliance Hub, which owns keyword policy and
+ * forwards it on to Telechurch.
+ *
+ * THIS WAS THE MISSING HOP. The relay stored every inbound message and advanced
+ * profile intake, but never called the Hub - so `/phone/inbound` was a live
+ * route nothing in production ever reached, and no STOP or START on this line
+ * has been honoured since the bridge was built. A real STOP from a member has
+ * been sitting unactioned in alliance_sms_inbox since 2026-07-26.
+ *
+ * ONLY KEYWORDS ARE FORWARDED, deliberately. Forwarding every message would put
+ * the Hub's conversational router and this function's own advanceProfileIntake
+ * on the same text, and the bridge multiplexer doc is explicit that the relay
+ * must not produce a second copy of a reply. Consent is the one thing the Hub
+ * must see and the relay cannot decide, so consent is the one thing that goes.
+ *
+ * Never throws: a keyword is already stored by the time this runs, and losing
+ * the whole inbound because the Hub was slow would trade a working record for a
+ * failed one.
+ */
+async function forwardConsentKeywordToHub(from: string, body: string) {
+  try {
+    const response = await fetch(`${hubBaseUrl}/phone/inbound`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Dispatcher-Token": relayToken,
+      },
+      body: JSON.stringify({ from, body, transport: "sms", registered: false }),
+    });
+    const hubBody = await response.json().catch(() => null);
+    return { ok: response.ok, status: response.status, result: hubBody };
+  } catch (error) {
+    return { ok: false, error: String((error as Error)?.message || error) };
+  }
+}
+
 async function recordInbound(from: string, body: string, date: unknown) {
   const messageDate = Number(date || Date.now());
   if (isBridgeSelfPhone(from)) {
@@ -172,6 +228,15 @@ async function recordInbound(from: string, body: string, date: unknown) {
   });
   const message = Array.isArray(inserted) ? inserted[0] : inserted;
   await writeRecord("inbound", from, body, { transport: "supabase_edge_relay", message_date: messageDate });
+
+  // A consent keyword goes to the Hub and stops there - it is an instruction
+  // about the number, not a conversation, so running it through profile intake
+  // as well would answer it twice.
+  if (isSmsConsentKeyword(body)) {
+    const consent = await forwardConsentKeywordToHub(from, body);
+    return { ok: true, message, consent, profile: { ok: true, routed: false, reason: "sms_consent_keyword" } };
+  }
+
   const profile = await advanceProfileIntake(from, body);
   return { ok: true, message, profile };
 }
