@@ -1304,25 +1304,32 @@ async function guideSend(to: string, message: string, raw: Record<string, unknow
 // notices go by email instead, which is the app's side and does not exist yet.
 // So a held notice is written on the question and stays visible there.
 //
-// "Closed" is exactly what Telechurch's own STOP handler writes: the flag off
-// with its source recorded as a STOP. A flag that is off for any other reason
-// is not a STOP, and a pastor has no other off switch.
-async function guidePastorTextClosed(phone: string) {
+// The answer follows the Assistant contract, section 5a (Telechurch,
+// pastorContactState). "closed" is exactly what Telechurch's own STOP handler
+// writes: the flag off with its reason recorded as a stop. Off with NO reason
+// recorded is "unknown", never open: one such number is a STOP from before
+// reasons were kept. A number with no profile at all has never been marked by
+// anything, and is open.
+async function guidePastorTextState(phone: string): Promise<"open" | "closed" | "unknown"> {
   const rows = await rest(`/profiles?phone=eq.${encodeURIComponent(`+1${lastTen(phone)}`)}&select=global_follow_sms,global_follow_sms_source`);
-  return (Array.isArray(rows) ? rows : []).some((row) => row?.global_follow_sms === false && row?.global_follow_sms_source === "stop");
+  const list = Array.isArray(rows) ? rows : [];
+  if (list.some((row) => row?.global_follow_sms === false && row?.global_follow_sms_source === "stop")) return "closed";
+  if (list.some((row) => row?.global_follow_sms === false)) return "unknown";
+  return "open";
 }
 
 // Every text to the pastor goes through here. If the answer cannot be read, the
 // text is NOT sent: texting someone who said STOP is the worse mistake, and a
 // held notice is tried again on the next pulse.
 async function guideSendPastor(message: string, raw: Record<string, unknown>) {
-  let closed = false;
+  let state: "open" | "closed" | "unknown" = "unknown";
   try {
-    closed = await guidePastorTextClosed(guidePastorPhone);
+    state = await guidePastorTextState(guidePastorPhone);
   } catch (_error) {
-    return { ok: false, held: true, reason: "pastor_text_channel_unknown" };
+    state = "unknown";
   }
-  if (closed) return { ok: false, held: true, reason: "pastor_text_channel_closed" };
+  if (state === "closed") return { ok: false, held: true, reason: "pastor_text_channel_closed" };
+  if (state === "unknown") return { ok: false, held: true, reason: "pastor_text_channel_unknown" };
   return guideSend(guidePastorPhone, message, raw);
 }
 

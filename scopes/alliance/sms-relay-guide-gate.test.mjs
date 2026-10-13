@@ -324,7 +324,9 @@ check("pastor said STOP: no text goes to the pastor, not the notice and not the 
 check("pastor said STOP: the held notice is written on the question", stopped.guide[0].values.handoff.pastor_notice === "pastor_text_channel_closed" && stopped.guide[0].status === "handoff_open");
 check("pastor said STOP: the visitor is not told the pastor was reminded", !stopped.outbox.some((m) => m.message.startsWith("Your message is with the pastor")));
 const flagOffNoStop = run(newModule, { env: guideEnv, seed: stopSeed(null, false), steps: stopSteps.slice(0, 2) });
-check("flag off for another reason is not a STOP: the pastor is texted", flagOffNoStop.outbox.some((m) => m.to.endsWith(N.pastor)) && flagOffNoStop.guide[0].values.handoff.pastor_notice === "texted");
+check("texts off with no reason recorded is not open: the pastor is not texted and the notice is held as unknown", !flagOffNoStop.outbox.some((m) => m.to.endsWith(N.pastor)) && flagOffNoStop.guide[0].values.handoff.pastor_notice === "pastor_text_channel_unknown");
+const noProfile = run(newModule, { env: guideEnv, steps: stopSteps.slice(0, 2) });
+check("a pastor number with no profile has never been marked: the pastor is texted", noProfile.outbox.some((m) => m.to.endsWith(N.pastor)) && noProfile.guide[0].values.handoff.pastor_notice === "texted");
 const restarted = run(newModule, { env: guideEnv, seed: stopSeed("start", true), steps: stopSteps.slice(0, 2) });
 check("pastor texted START again: the pastor is texted", restarted.outbox.some((m) => m.to.endsWith(N.pastor)));
 const unknown = run(newModule, {
