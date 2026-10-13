@@ -1308,8 +1308,15 @@ async function guideSend(to: string, message: string, raw: Record<string, unknow
 // pastorContactState). "closed" is exactly what Telechurch's own STOP handler
 // writes: the flag off with its reason recorded as a stop. Off with NO reason
 // recorded is "unknown", never open: one such number is a STOP from before
-// reasons were kept. A number with no profile at all has never been marked by
-// anything, and is open.
+// reasons were kept.
+//
+// BEFORE A REAL PASTOR IS BEHIND THIS DOOR, CHANGE THE LAST LINE BELOW. A
+// number with no profile at all is treated as open, and that is right only for
+// the test gate, where the pastor number is set by hand. A real church's
+// pastor is found from the church's owner, who always has a profile, so "no
+// profile" then means the number could not be read and must be "unknown" and
+// held. (The phone-trial session's reading of the app's rule, 2026-10-13; not
+// a ruling of the operator's.)
 async function guidePastorTextState(phone: string): Promise<"open" | "closed" | "unknown"> {
   const rows = await rest(`/profiles?phone=eq.${encodeURIComponent(`+1${lastTen(phone)}`)}&select=global_follow_sms,global_follow_sms_source`);
   const list = Array.isArray(rows) ? rows : [];
