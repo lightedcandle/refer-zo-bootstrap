@@ -176,7 +176,8 @@ async function main() {
 
   // The guide's gate. Only these names are passed on, and only from this file.
   // Leaving --guide-env off does not switch a deployed guide off: secrets
-  // persist. To switch it off, pass a guide env with the visitor list empty.
+  // persist. To switch it off, pass a guide env whose visitor list is the word
+  // "off" (anything that is not a ten-digit number leaves the list empty).
   const guideEnv = args.guideEnv && existsSync(args.guideEnv) ? parseEnv(args.guideEnv) : {};
   const guideNames = [
     "ALLIANCE_GUIDE_TEST_VISITOR_PHONES",
