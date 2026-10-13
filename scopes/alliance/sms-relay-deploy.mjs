@@ -22,8 +22,19 @@ function parseArgs(argv) {
     bridgeEnv: defaultBridgeEnv,
     apply: false,
     deploy: false,
+    // The guide gate's test numbers live in their own ignored env file, never in git.
+    guideEnv: "",
+    // Deploy some other copy of the function - the way back to a known version.
+    source: "",
+    // The Supabase CLI to run. "npx supabase" needs a project folder that has it.
+    supabase: "",
+    useApi: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--guide-env" && argv[i + 1]) { args.guideEnv = argv[++i]; continue; }
+    if (argv[i] === "--source" && argv[i + 1]) { args.source = argv[++i]; continue; }
+    if (argv[i] === "--supabase" && argv[i + 1]) { args.supabase = argv[++i]; continue; }
+    if (argv[i] === "--use-api") { args.useApi = true; continue; }
     if (argv[i] === "--env-file" && argv[i + 1]) args.envFile = argv[++i];
     else if (argv[i] === "--node-modules-root" && argv[i + 1]) args.nodeModulesRoot = argv[++i];
     else if (argv[i] === "--telechurch-root" && argv[i + 1]) args.telechurchRoot = argv[++i];
@@ -82,6 +93,7 @@ function scrub(text) {
   return text
     .replace(/SERVICE_ROLE_KEY=[^\s]+/g, "SERVICE_ROLE_KEY=[redacted]")
     .replace(/ALLIANCE_SMS_RELAY_TOKEN=[^\s]+/g, "ALLIANCE_SMS_RELAY_TOKEN=[redacted]")
+    .replace(/(ALLIANCE_GUIDE_TEST_[A-Z_]+)=[^\s]+/g, "$1=[redacted]")
     .trim();
 }
 
@@ -156,8 +168,25 @@ async function main() {
 
   const targetFunction = resolve(args.telechurchRoot, "supabase", "functions", functionName, "index.ts");
   await mkdir(dirname(targetFunction), { recursive: true });
-  await copyFile(sourceFunction, targetFunction);
+  const deploySource = args.source ? resolve(args.source) : sourceFunction;
+  if (!existsSync(deploySource)) throw new Error(`Missing source to deploy: ${deploySource}`);
+  await copyFile(deploySource, targetFunction);
+  packet.deployed_source = args.source ? "given with --source" : "working tree";
   ensureFunctionJwtConfig(args.telechurchRoot);
+
+  // The guide's gate. Only these names are passed on, and only from this file.
+  // Leaving --guide-env off does not switch a deployed guide off: secrets
+  // persist. To switch it off, pass a guide env with the visitor list empty.
+  const guideEnv = args.guideEnv && existsSync(args.guideEnv) ? parseEnv(args.guideEnv) : {};
+  const guideNames = [
+    "ALLIANCE_GUIDE_TEST_VISITOR_PHONES",
+    "ALLIANCE_GUIDE_TEST_PASTOR_PHONE",
+    "ALLIANCE_GUIDE_CHURCH_ID",
+    "ALLIANCE_GUIDE_CHURCH_NAME",
+    "ALLIANCE_GUIDE_WAIT_SECONDS",
+    "ALLIANCE_GUIDE_NUDGE_MINUTES",
+  ].filter((name) => name in guideEnv);
+  packet.guide_gate = { names_set: guideNames, values_printed: false };
 
   const tempDir = resolve(args.telechurchRoot, ".refer-temp");
   const tempEnv = resolve(tempDir, "alliance-sms-relay-secrets.env");
@@ -168,20 +197,22 @@ async function main() {
     `ALLIANCE_PROFILE_FORM_BASE_URL=${profileFormBaseUrl}`,
     `ALLIANCE_PROFILE_FORM_SECRET=${profileFormSecret}`,
     bridgePhoneNumber ? `ALLIANCE_BRIDGE_PHONE_NUMBER=${bridgePhoneNumber}` : "",
+    ...guideNames.map((name) => `${name}=${guideEnv[name]}`),
   ].filter(Boolean).join("\n") + "\n", "utf8");
 
   const deployEnv = { ...process.env, SUPABASE_ACCESS_TOKEN: envMaster.SUPABASE_ACCESS_TOKEN };
+  const [cli, ...cliLead] = args.supabase ? [args.supabase] : ["npx", "supabase"];
   if (args.deploy) {
     packet.results.push({
       step: "secrets_set",
-      ...run("npx", ["supabase", "secrets", "set", "--project-ref", ref, "--env-file", tempEnv], {
+      ...run(cli, [...cliLead, "secrets", "set", "--project-ref", ref, "--env-file", tempEnv], {
         cwd: args.telechurchRoot,
         env: deployEnv,
       }),
     });
     packet.results.push({
       step: "functions_deploy",
-      ...run("npx", ["supabase", "functions", "deploy", functionName, "--project-ref", ref, "--no-verify-jwt"], {
+      ...run(cli, [...cliLead, "functions", "deploy", functionName, "--project-ref", ref, "--no-verify-jwt", ...(args.useApi ? ["--use-api"] : [])], {
         cwd: args.telechurchRoot,
         env: deployEnv,
       }),

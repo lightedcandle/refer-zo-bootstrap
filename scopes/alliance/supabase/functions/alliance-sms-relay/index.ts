@@ -61,12 +61,25 @@ Deno.serve(async (req) => {
 
     if (route === "/phone/pulse" && req.method === "POST") {
       const body = await req.json().catch(() => ({}));
-      return json(await forwardPulse({
+      const pulse = await forwardPulse({
         bridge: String(url.searchParams.get("bridge") || body.bridge || ""),
         type: String(body.type || "minute"),
         timestamp: Number(body.timestamp || Date.now()),
         battery: body.battery,
-      }));
+      });
+      // The guide has no clock of its own; the phone's minute pulse is the only
+      // thing that arrives on time. Never allowed to fail the pulse.
+      if (guideEnabled()) await sweepGuide().catch(() => null);
+      return json(pulse);
+    }
+
+    if (route === "/guide/next" && req.method === "GET") {
+      return json(await nextGuideQuestion());
+    }
+
+    if (route === "/guide/answer" && req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      return json(await applyGuideAnswer(required(body.id, "id"), body.response));
     }
 
     if (route === "/sms/latest" && req.method === "GET") {
@@ -235,6 +248,14 @@ async function recordInbound(from: string, body: string, date: unknown) {
   if (isSmsConsentKeyword(body)) {
     const consent = await forwardConsentKeywordToHub(from, body);
     return { ok: true, message, consent, profile: { ok: true, routed: false, reason: "sms_consent_keyword" } };
+  }
+
+  // The guide, for the test numbers only. A number outside the gate costs no
+  // lookup here and goes on exactly as before; so does anything the guide path
+  // throws on.
+  if (guideEnabled()) {
+    const guide = await routeGuideInbound(from, body).catch(() => null);
+    if (guide) return { ok: true, message, profile: guide };
   }
 
   const profile = await advanceProfileIntake(from, body);
@@ -1213,6 +1234,317 @@ type ProfileContextValues = {
   edit_requested_at?: string;
   reset_at?: string;
 };
+
+// ---- The guide: an answerer beside the carrier, gated to test numbers -------
+//
+// Design: refer-script-factory docs/sms-answerer-slot/README.md. Contract:
+// assistant/1 (Telechurch, refer.app/refer.telechurch.assistant.contract.md).
+//
+// The relay is the DOOR. It never writes an answer. It writes the question down,
+// an answerer somewhere collects it (/guide/next), and what comes back
+// (/guide/answer) is sent unchanged or refused. The answerer is never given the
+// sender's number.
+//
+// THE GATE. Nothing here runs unless both a visitor list and a pastor number are
+// configured as secrets, and then only for those numbers. Every text this block
+// sends goes through guideSend, which refuses any other destination - so a bug
+// in here cannot text a stranger.
+//
+// To switch the guide off: unset ALLIANCE_GUIDE_TEST_VISITOR_PHONES and redeploy.
+const guideVisitorPhones = new Set(
+  String(Deno.env.get("ALLIANCE_GUIDE_TEST_VISITOR_PHONES") || "")
+    .split(/[,\s]+/)
+    .map((item) => lastTen(item))
+    .filter((item) => item.length === 10),
+);
+const guidePastorPhone = lastTen(Deno.env.get("ALLIANCE_GUIDE_TEST_PASTOR_PHONE") || "");
+const guideChurchId = String(Deno.env.get("ALLIANCE_GUIDE_CHURCH_ID") || "").trim();
+const guideChurchName = String(Deno.env.get("ALLIANCE_GUIDE_CHURCH_NAME") || "").trim() || "the church";
+// A guess, recorded as one in the contract's section 7: a sleeping phone takes
+// 15 to 30 seconds a reply, and so does the first reply after the cards change.
+const guideWaitSeconds = Math.max(20, Number(Deno.env.get("ALLIANCE_GUIDE_WAIT_SECONDS") || 90));
+// Proposed at 24 hours and not ruled, so it is a setting.
+const guideNudgeMinutes = Math.max(1, Number(Deno.env.get("ALLIANCE_GUIDE_NUDGE_MINUTES") || 1440));
+
+const GUIDE_ENTITY = "sms_guide_question";
+const GUIDE_REASONS = new Set(["crisis", "care", "asked_for_pastor", "not_saved", "fault"]);
+// The contract's two fixed sentences for a door (section 5). Not to be reworded here.
+const guideUnreachableReply = () =>
+  `Thank you for your message. I am passing it to the pastor of ${guideChurchName}, who will respond to you.`;
+const guideNotForgottenReply = () =>
+  `Your message is with the pastor of ${guideChurchName} and has not been forgotten. A pastor will respond to you.`;
+const guideCrisisLine = "If you are in danger or thinking of harming yourself, call or text 988 now, or call 911.";
+// The door's own list. It decides nothing about the reply: it is the second
+// guard of rule 3, used only when the answerer faulted or never came back.
+const GUIDE_CRISIS_WORDS =
+  /(kill(ing)? myself|suicid|end(ing)? (my life|it all)|better off without me|can'?t (keep going|go on)|think i can keep going|(hurt|harm)(ing)? myself|want to die|no reason to live|nobody would notice if i was gone)/i;
+
+function lastTen(value: unknown) {
+  return onlyDigits(String(value || "")).slice(-10);
+}
+
+function guideEnabled() {
+  return guideVisitorPhones.size > 0 && guidePastorPhone.length === 10;
+}
+
+function guideHasCrisisLine(text: string) {
+  return /\b988\b/.test(text) && /\b911\b/.test(text);
+}
+
+async function guideSend(to: string, message: string, raw: Record<string, unknown>) {
+  const ten = lastTen(to);
+  if (!(guideVisitorPhones.has(ten) || ten === guidePastorPhone)) {
+    throw new Error("guide_refused_destination_outside_gate");
+  }
+  return queueSms(onlyDigits(to), message, { source: "alliance_sms_guide", ...raw });
+}
+
+async function routeGuideInbound(from: string, body: string) {
+  const ten = lastTen(from);
+  const inbound = String(body || "").trim();
+  if (!inbound) return null;
+  if (ten === guidePastorPhone) return routeGuidePastorReply(from, inbound);
+  if (!guideVisitorPhones.has(ten)) return null;
+  // RESET stays what it is today, so a test number can still restart its profile.
+  if (isResetCommand(inbound)) return null;
+
+  const phone = onlyDigits(from);
+  const earlier = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&values->>visitor_phone=eq.${encodeURIComponent(phone)}&limit=1&select=id`);
+  const inserted = await rest("/alliance_records?select=id", {
+    method: "POST",
+    body: {
+      entity: GUIDE_ENTITY,
+      label: `SMS guide question ${phone}`,
+      route: `alliance-sms-guide:${phone}:${Date.now().toString(36)}`,
+      local_dataset: "alliance-sms-guide",
+      status: "waiting",
+      values: {
+        contract: "assistant/1",
+        door: "sms",
+        church_id: guideChurchId,
+        church_name: guideChurchName,
+        visitor_phone: phone,
+        question: inbound,
+        first_contact: !(Array.isArray(earlier) && earlier.length),
+        door_reads_crisis: GUIDE_CRISIS_WORDS.test(inbound),
+        asked_at: new Date().toISOString(),
+      },
+    },
+  });
+  const record = Array.isArray(inserted) ? inserted[0] : inserted;
+  if (!record?.id) throw new Error("guide_question_not_stored");
+  return {
+    ok: true,
+    routed: true,
+    reason: "guide_question_waiting",
+    script_id: "alliance.sms_guide.v1",
+    question_id: record.id,
+    delivery: { ok: true, skipped: true, reason: "waiting_for_answerer" },
+  };
+}
+
+// Moves a record from one of `fromStatuses` to `toStatus` and reports whether
+// THIS call moved it. Two pulses, or a late answer racing a timeout, must not
+// both send.
+async function guideClaim(id: string, fromStatuses: string[], toStatus: string, values?: Record<string, unknown>) {
+  const body: Record<string, unknown> = { status: toStatus };
+  if (values) body.values = values;
+  const rows = await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&entity=eq.${GUIDE_ENTITY}&status=in.(${fromStatuses.join(",")})&select=id,status,values`, {
+    method: "PATCH",
+    body,
+  });
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+async function nextGuideQuestion() {
+  if (!guideEnabled()) return { ok: true, question: null, guide: "off" };
+  const rows = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.waiting&order=created_at.asc&limit=1&select=id,values,created_at`);
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) return { ok: true, question: null };
+  const claimed = await guideClaim(row.id, ["waiting"], "claimed");
+  if (!claimed) return { ok: true, question: null };
+  const values = (row.values || {}) as Record<string, unknown>;
+  // Exactly the contract's "what goes in", less the cards, which the collector
+  // holds. No number, no name, no history.
+  return {
+    ok: true,
+    question: {
+      id: row.id,
+      contract: "assistant/1",
+      door: "sms",
+      church_id: values.church_id || "",
+      question: values.question || "",
+      first_contact: Boolean(values.first_contact),
+    },
+  };
+}
+
+function guideReadResponse(response: unknown) {
+  const r = (response && typeof response === "object" ? response : {}) as Record<string, unknown>;
+  const text = typeof r.text === "string" ? r.text.trim() : "";
+  if (r.contract !== "assistant/1" || !text || text.length > 900) return null;
+  if (r.kind === "answer") {
+    // Rule 6: an answer that names no saved fact is refused.
+    const used = Array.isArray(r.used_facts) ? r.used_facts.filter((id) => typeof id === "string" && id) : [];
+    return used.length ? { kind: "answer" as const, text, used_facts: used } : null;
+  }
+  if (r.kind === "handoff") {
+    const handoff = (r.handoff && typeof r.handoff === "object" ? r.handoff : {}) as Record<string, unknown>;
+    const reason = String(handoff.reason || "");
+    if (!GUIDE_REASONS.has(reason)) return null;
+    return {
+      kind: "handoff" as const,
+      text,
+      reason,
+      urgent: reason === "crisis",
+      decided_by: String(handoff.decided_by || ""),
+      gap: r.gap && typeof r.gap === "object" ? r.gap : null,
+    };
+  }
+  return null;
+}
+
+async function applyGuideAnswer(id: string, response: unknown) {
+  if (!guideEnabled()) return { ok: true, applied: false, reason: "guide_off" };
+  const held = await guideClaim(id, ["waiting", "claimed"], "answering");
+  // Already timed out and handed to the pastor, or answered twice.
+  if (!held) return { ok: true, applied: false, reason: "late_or_unknown" };
+  const values = (held.values || {}) as Record<string, unknown>;
+  const read = guideReadResponse(response);
+  if (!read) return guideHandOff(id, values, { text: "", reason: "fault", urgent: false, source: "refused_response", refused: response });
+  if (read.kind === "answer") {
+    const delivery = await guideSend(String(values.visitor_phone), read.text, { question_id: id, kind: "answer" });
+    await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&select=id`, {
+      method: "PATCH",
+      body: {
+        status: "answered",
+        values: { ...values, response: { kind: "answer", text: read.text, used_facts: read.used_facts }, answered_at: new Date().toISOString() },
+      },
+    });
+    return { ok: true, applied: true, kind: "answer", delivery };
+  }
+  return guideHandOff(id, values, { ...read, source: "answerer" });
+}
+
+// One handoff: the visitor hears the fixed words, the pastor is told, and the
+// question stays open with its age until the pastor replies.
+async function guideHandOff(
+  id: string,
+  values: Record<string, unknown>,
+  h: { text: string; reason: string; urgent: boolean; source: string; decided_by?: string; gap?: unknown; refused?: unknown },
+) {
+  const question = String(values.question || "");
+  const doorCrisis = Boolean(values.door_reads_crisis);
+  const urgent = h.urgent || (h.reason === "fault" && doorCrisis);
+  let text = h.text || guideUnreachableReply();
+  // Rule 3: add the crisis line only when it is absent. Never twice.
+  if (urgent && !guideHasCrisisLine(text)) text = `${text} ${guideCrisisLine}`;
+
+  const open = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.handoff_open&select=id,values`);
+  const taken = new Set((Array.isArray(open) ? open : []).map((row) => Number(row?.values?.handoff?.short_no || 0)));
+  let shortNo = 1;
+  while (taken.has(shortNo)) shortNo += 1;
+
+  const nowIso = new Date().toISOString();
+  await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&select=id`, {
+    method: "PATCH",
+    body: {
+      status: "handoff_open",
+      values: {
+        ...values,
+        response: { kind: "handoff", text, reason: h.reason, urgent, decided_by: h.decided_by || "", source: h.source },
+        gap: h.gap || null,
+        refused_response: h.refused || null,
+        handoff: { reason: h.reason, urgent, short_no: shortNo, opened_at: nowIso },
+      },
+    },
+  });
+
+  const visitor = await guideSend(String(values.visitor_phone), text, { question_id: id, kind: "handoff", reason: h.reason });
+  // INFERRED, for the operator to overturn: the pastor is shown the visitor's
+  // words (it is the pastor's job to answer them) and never the visitor's number.
+  const notice = [
+    `${urgent ? "URGENT. " : ""}Telechurch Live: someone texted ${guideChurchName} and needs you (#${shortNo}).`,
+    `They wrote: "${question.slice(0, 600)}"`,
+    `Reply to this text and your words go back to them. If more than one is open, start with #${shortNo}.`,
+  ].join("\n");
+  const pastor = await guideSend(guidePastorPhone, notice, { question_id: id, kind: "pastor_notice", short_no: shortNo });
+  return { ok: true, applied: true, kind: "handoff", reason: h.reason, urgent, short_no: shortNo, delivery: visitor, pastor_notice: pastor };
+}
+
+async function routeGuidePastorReply(from: string, inbound: string) {
+  const open = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.handoff_open&order=created_at.asc&select=id,values`);
+  const rows = Array.isArray(open) ? open : [];
+  // Nothing waiting on this pastor: the text is not a reply, and takes today's path.
+  if (!rows.length) return null;
+
+  const tagged = inbound.match(/^#\s*(\d{1,3})\b[\s:.)\-]*([\s\S]*)$/);
+  let target = null;
+  let words = inbound;
+  if (tagged) {
+    target = rows.find((row) => Number(row?.values?.handoff?.short_no || 0) === Number(tagged[1])) || null;
+    words = tagged[2].trim();
+  } else if (rows.length === 1) {
+    target = rows[0];
+  }
+  if (!target || !words) {
+    // Never guessed. Asked.
+    const numbers = rows.map((row) => `#${row?.values?.handoff?.short_no}`).join(", ");
+    const ask = `More than one question is open (${numbers}). Start your reply with the number, like: #${rows[0]?.values?.handoff?.short_no} and then your answer.`;
+    const delivery = await guideSend(from, ask, { kind: "pastor_which_one" });
+    return { ok: true, routed: true, reason: "guide_pastor_reply_unplaced", script_id: "alliance.sms_guide.v1", delivery };
+  }
+
+  const values = (target.values || {}) as Record<string, unknown>;
+  const closed = await guideClaim(target.id, ["handoff_open"], "handoff_closed", {
+    ...values,
+    pastor_reply: words,
+    handoff: { ...(values.handoff as Record<string, unknown>), closed_at: new Date().toISOString() },
+  });
+  if (!closed) return null;
+  // INFERRED wording, waiting on the guide's name and voice.
+  const delivery = await guideSend(String(values.visitor_phone), `From the pastor of ${guideChurchName}: ${words}`, {
+    question_id: target.id,
+    kind: "pastor_reply",
+  });
+  const shortNo = (values.handoff as Record<string, unknown>)?.short_no;
+  await guideSend(from, `Sent. Your reply to #${shortNo} is on its way to them.`, { question_id: target.id, kind: "pastor_confirm" }).catch(() => null);
+  return { ok: true, routed: true, reason: "guide_pastor_reply_delivered", script_id: "alliance.sms_guide.v1", question_id: target.id, delivery };
+}
+
+// Run on the phone's pulse. Two jobs: a question nobody collected in time goes
+// to the pastor with the fixed sentence, and a pastor who has not replied is
+// reminded while the visitor is told, once, that they are not forgotten.
+async function sweepGuide() {
+  const cutoff = new Date(Date.now() - guideWaitSeconds * 1000).toISOString();
+  const stale = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=in.(waiting,claimed)&created_at=lt.${encodeURIComponent(cutoff)}&order=created_at.asc&limit=5&select=id`);
+  for (const row of Array.isArray(stale) ? stale : []) {
+    const held = await guideClaim(row.id, ["waiting", "claimed"], "answering");
+    if (!held) continue;
+    await guideHandOff(row.id, (held.values || {}) as Record<string, unknown>, { text: "", reason: "fault", urgent: false, source: "answerer_unreachable" }).catch(() => null);
+  }
+
+  const open = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.handoff_open&order=created_at.asc&limit=20&select=id,values`);
+  for (const row of Array.isArray(open) ? open : []) {
+    const values = (row.values || {}) as Record<string, unknown>;
+    const handoff = (values.handoff || {}) as Record<string, unknown>;
+    // Not for an urgent handoff: how fast a crisis must reach a person is unsettled.
+    if (handoff.urgent || handoff.nudged_at) continue;
+    const openedAt = Date.parse(String(handoff.opened_at || ""));
+    if (!Number.isFinite(openedAt) || Date.now() - openedAt < guideNudgeMinutes * 60 * 1000) continue;
+    const marked = await guideClaim(row.id, ["handoff_open"], "handoff_open", {
+      ...values,
+      handoff: { ...handoff, nudged_at: new Date().toISOString() },
+    });
+    if (!marked) continue;
+    // The sentence is only true if the pastor is reminded at the same moment.
+    await guideSend(guidePastorPhone, `Reminder: #${handoff.short_no} at ${guideChurchName} is still waiting for your reply. They wrote: "${String(values.question || "").slice(0, 400)}"`, {
+      question_id: row.id,
+      kind: "pastor_reminder",
+    }).catch(() => null);
+    await guideSend(String(values.visitor_phone), guideNotForgottenReply(), { question_id: row.id, kind: "not_forgotten" }).catch(() => null);
+  }
+}
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
