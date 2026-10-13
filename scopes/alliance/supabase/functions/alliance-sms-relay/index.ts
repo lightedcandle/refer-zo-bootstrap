@@ -1299,6 +1299,55 @@ async function guideSend(to: string, message: string, raw: Record<string, unknow
   return queueSms(onlyDigits(to), message, { source: "alliance_sms_guide", ...raw });
 }
 
+// A pastor who texted STOP is not texted. Operator, 2026-10-13: STOP ends the
+// text channel to that number and never ends the pastor being the contact; the
+// notices go by email instead, which is the app's side and does not exist yet.
+// So a held notice is written on the question and stays visible there.
+//
+// "Closed" is exactly what Telechurch's own STOP handler writes: the flag off
+// with its source recorded as a STOP. A flag that is off for any other reason
+// is not a STOP, and a pastor has no other off switch.
+async function guidePastorTextClosed(phone: string) {
+  const rows = await rest(`/profiles?phone=eq.${encodeURIComponent(`+1${lastTen(phone)}`)}&select=global_follow_sms,global_follow_sms_source`);
+  return (Array.isArray(rows) ? rows : []).some((row) => row?.global_follow_sms === false && row?.global_follow_sms_source === "stop");
+}
+
+// Every text to the pastor goes through here. If the answer cannot be read, the
+// text is NOT sent: texting someone who said STOP is the worse mistake, and a
+// held notice is tried again on the next pulse.
+async function guideSendPastor(message: string, raw: Record<string, unknown>) {
+  let closed = false;
+  try {
+    closed = await guidePastorTextClosed(guidePastorPhone);
+  } catch (_error) {
+    return { ok: false, held: true, reason: "pastor_text_channel_unknown" };
+  }
+  if (closed) return { ok: false, held: true, reason: "pastor_text_channel_closed" };
+  return guideSend(guidePastorPhone, message, raw);
+}
+
+function guidePastorNotice(question: string, shortNo: unknown, urgent: boolean) {
+  // INFERRED, for the operator to overturn: the pastor is shown the visitor's
+  // words (it is the pastor's job to answer them) and never the visitor's number.
+  return [
+    `${urgent ? "URGENT. " : ""}Telechurch Live: someone texted ${guideChurchName} and needs you (#${shortNo}).`,
+    `They wrote: "${question.slice(0, 600)}"`,
+    `Reply to this text and your words go back to them. If more than one is open, start with #${shortNo}.`,
+  ].join("\n");
+}
+
+// Writes down whether the pastor was texted, so a held notice can be seen.
+async function guideMarkPastorNotice(id: string, result: Record<string, unknown>) {
+  const rows = await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&select=id,values`);
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) return;
+  const values = (row.values || {}) as Record<string, unknown>;
+  await rest(`/alliance_records?id=eq.${encodeURIComponent(id)}&select=id`, {
+    method: "PATCH",
+    body: { values: { ...values, handoff: { ...(values.handoff as Record<string, unknown>), pastor_notice: result.held ? result.reason : "texted", pastor_notice_at: new Date().toISOString() } } },
+  });
+}
+
 async function routeGuideInbound(from: string, body: string) {
   const ten = lastTen(from);
   const inbound = String(body || "").trim();
@@ -1415,7 +1464,7 @@ async function guideSavePastorAnswer(from: string, aboutWords: string) {
   const label = aboutWords.replace(/\s+/g, " ").trim().slice(0, 60);
   const topic = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
   if (!/^[a-z][a-z0-9_]{1,39}$/.test(topic)) {
-    const delivery = await guideSend(from, `To save your answer to #${shortNo}, add a word or two for what it is about, like: SAVE dress code`, { question_id: target.id, kind: "pastor_save_needs_subject" });
+    const delivery = await guideSendPastor(`To save your answer to #${shortNo}, add a word or two for what it is about, like: SAVE dress code`, { question_id: target.id, kind: "pastor_save_needs_subject" });
     return { ok: true, routed: true, reason: "guide_pastor_save_needs_subject", script_id: "alliance.sms_guide.v1", delivery };
   }
   let savedId = "";
@@ -1437,14 +1486,14 @@ async function guideSavePastorAnswer(from: string, aboutWords: string) {
     savedId = "";
   }
   if (!savedId) {
-    const delivery = await guideSend(from, `Sorry, your answer to #${shortNo} could not be saved just now. Nothing was lost; your reply was still sent.`, { question_id: target.id, kind: "pastor_save_failed" });
+    const delivery = await guideSendPastor(`Sorry, your answer to #${shortNo} could not be saved just now. Nothing was lost; your reply was still sent.`, { question_id: target.id, kind: "pastor_save_failed" });
     return { ok: true, routed: true, reason: "guide_pastor_save_failed", script_id: "alliance.sms_guide.v1", delivery };
   }
   await rest(`/alliance_records?id=eq.${encodeURIComponent(target.id)}&select=id`, {
     method: "PATCH",
     body: { values: { ...values, saved_answer_id: savedId, saved_answer_topic: topic } },
   });
-  const delivery = await guideSend(from, `Saved under "${label}". The guide will give your answer the next time someone asks about it.`, { question_id: target.id, kind: "pastor_save_confirm" });
+  const delivery = await guideSendPastor(`Saved under "${label}". The guide will give your answer the next time someone asks about it.`, { question_id: target.id, kind: "pastor_save_confirm" });
   return { ok: true, routed: true, reason: "guide_pastor_answer_saved", script_id: "alliance.sms_guide.v1", saved_answer_id: savedId, delivery };
 }
 
@@ -1530,14 +1579,8 @@ async function guideHandOff(
   });
 
   const visitor = await guideSend(String(values.visitor_phone), text, { question_id: id, kind: "handoff", reason: h.reason });
-  // INFERRED, for the operator to overturn: the pastor is shown the visitor's
-  // words (it is the pastor's job to answer them) and never the visitor's number.
-  const notice = [
-    `${urgent ? "URGENT. " : ""}Telechurch Live: someone texted ${guideChurchName} and needs you (#${shortNo}).`,
-    `They wrote: "${question.slice(0, 600)}"`,
-    `Reply to this text and your words go back to them. If more than one is open, start with #${shortNo}.`,
-  ].join("\n");
-  const pastor = await guideSend(guidePastorPhone, notice, { question_id: id, kind: "pastor_notice", short_no: shortNo });
+  const pastor = await guideSendPastor(guidePastorNotice(question, shortNo, urgent), { question_id: id, kind: "pastor_notice", short_no: shortNo });
+  await guideMarkPastorNotice(id, pastor as Record<string, unknown>).catch(() => null);
   return { ok: true, applied: true, kind: "handoff", reason: h.reason, urgent, short_no: shortNo, delivery: visitor, pastor_notice: pastor };
 }
 
@@ -1565,7 +1608,7 @@ async function routeGuidePastorReply(from: string, inbound: string) {
     // Never guessed. Asked.
     const numbers = rows.map((row) => `#${row?.values?.handoff?.short_no}`).join(", ");
     const ask = `More than one question is open (${numbers}). Start your reply with the number, like: #${rows[0]?.values?.handoff?.short_no} and then your answer.`;
-    const delivery = await guideSend(from, ask, { kind: "pastor_which_one" });
+    const delivery = await guideSendPastor(ask, { kind: "pastor_which_one" });
     return { ok: true, routed: true, reason: "guide_pastor_reply_unplaced", script_id: "alliance.sms_guide.v1", delivery };
   }
 
@@ -1582,8 +1625,7 @@ async function routeGuidePastorReply(from: string, inbound: string) {
     kind: "pastor_reply",
   });
   const shortNo = (values.handoff as Record<string, unknown>)?.short_no;
-  await guideSend(
-    from,
+  await guideSendPastor(
     `Sent. Your reply to #${shortNo} is on its way to them. To keep it so the guide can answer this next time, reply SAVE and a word or two for what it is about, like: SAVE service times`,
     { question_id: target.id, kind: "pastor_confirm" },
   ).catch(() => null);
@@ -1606,20 +1648,28 @@ async function sweepGuide() {
   for (const row of Array.isArray(open) ? open : []) {
     const values = (row.values || {}) as Record<string, unknown>;
     const handoff = (values.handoff || {}) as Record<string, unknown>;
+    // A notice held because the STOP check could not be read is tried again.
+    if (handoff.pastor_notice === "pastor_text_channel_unknown") {
+      const again = await guideSendPastor(guidePastorNotice(String(values.question || ""), handoff.short_no, Boolean(handoff.urgent)), { question_id: row.id, kind: "pastor_notice", short_no: handoff.short_no });
+      await guideMarkPastorNotice(row.id, again as Record<string, unknown>).catch(() => null);
+      continue;
+    }
     // Not for an urgent handoff: how fast a crisis must reach a person is unsettled.
     if (handoff.urgent || handoff.nudged_at) continue;
     const openedAt = Date.parse(String(handoff.opened_at || ""));
     if (!Number.isFinite(openedAt) || Date.now() - openedAt < guideNudgeMinutes * 60 * 1000) continue;
+    // The sentence to the visitor is only true if the pastor is reminded at the
+    // same moment, so the reminder goes first; if it is held, nothing is said.
+    const reminder = await guideSendPastor(`Reminder: #${handoff.short_no} at ${guideChurchName} is still waiting for your reply. They wrote: "${String(values.question || "").slice(0, 400)}"`, {
+      question_id: row.id,
+      kind: "pastor_reminder",
+    }).catch(() => ({ held: true, reason: "pastor_text_channel_unknown" }));
+    if ((reminder as Record<string, unknown>).held) continue;
     const marked = await guideClaim(row.id, ["handoff_open"], "handoff_open", {
       ...values,
       handoff: { ...handoff, nudged_at: new Date().toISOString() },
     });
     if (!marked) continue;
-    // The sentence is only true if the pastor is reminded at the same moment.
-    await guideSend(guidePastorPhone, `Reminder: #${handoff.short_no} at ${guideChurchName} is still waiting for your reply. They wrote: "${String(values.question || "").slice(0, 400)}"`, {
-      question_id: row.id,
-      kind: "pastor_reminder",
-    }).catch(() => null);
     await guideSend(String(values.visitor_phone), guideNotForgottenReply(), { question_id: row.id, kind: "not_forgotten" }).catch(() => null);
   }
 }

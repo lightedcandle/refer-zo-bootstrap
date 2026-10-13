@@ -42,7 +42,7 @@ const N = {
 // ---- the child: one relay, one pretend world, one script of requests --------
 if (process.env.RELAY_CHILD) {
   const spec = JSON.parse(process.env.RELAY_CHILD);
-  const db = { alliance_records: [], alliance_sms_outbox: [], alliance_sms_inbox: [], alliance_sms_delivery_events: [], org_standing_answers: [] };
+  const db = { alliance_records: [], alliance_sms_outbox: [], alliance_sms_inbox: [], alliance_sms_delivery_events: [], org_standing_answers: [], profiles: [] };
   const trace = [];
   let seq = 0;
   let clock = Date.now();
@@ -87,6 +87,7 @@ if (process.env.RELAY_CHILD) {
     const table = url.pathname.replace("/rest/v1/", "");
     const rows = db[table];
     if (!rows) return respond({ message: `no table ${table}` }, 404);
+    if (spec.failProfiles && table === "profiles" && (spec.failProfiles === true || trace.filter((t) => t.includes("/rest/v1/profiles")).length <= spec.failProfiles)) return respond({ message: "pretend failure" }, 500);
     if (spec.failInsertOf && method === "POST" && body?.entity === spec.failInsertOf) return respond({ message: "pretend failure" }, 500);
     const filters = [...url.searchParams.entries()].filter(([k]) => !["select", "order", "limit"].includes(k));
     const hit = (row) => filters.every(([k, v]) => matches(row, k, v));
@@ -309,6 +310,31 @@ check("the next question is handed the saved answer", handed.saved_answers.lengt
 const savedDown = run(newModule, { env: guideEnv, failSavedRead: true, steps: [inbound(N.visitor, "when do you meet", 1), { path: "/guide/next", method: "GET", name: "collect" }] });
 check("saved answers unreadable: the question is still handed out, with none", byName(savedDown, "collect").raw.question?.question === "when do you meet" && savedDown.out[1].raw.question.saved_answers.length === 0);
 
+// A pastor who texted STOP is not texted.
+const stopSeed = (source, flag) => [{ table: "profiles", row: { id: "p1", phone: `+1${N.pastor}`, global_follow_sms: flag, global_follow_sms_source: source } }];
+const stopSteps = [
+  inbound(N.visitor, "what time is service on sunday", 1),
+  answer("q:1", notSaved),
+  { backdate: "handoffs" },
+  { path: "/phone/pulse", name: "pulse after the limit", body: { type: "minute" } },
+];
+const stopped = run(newModule, { env: guideEnv, seed: stopSeed("stop", false), steps: stopSteps });
+check("pastor said STOP: the visitor still hears the handoff", stopped.outbox.length === 1 && stopped.outbox[0].to.endsWith(N.visitor) && stopped.outbox[0].message === notSaved.text);
+check("pastor said STOP: no text goes to the pastor, not the notice and not the reminder", !stopped.outbox.some((m) => m.to.endsWith(N.pastor)));
+check("pastor said STOP: the held notice is written on the question", stopped.guide[0].values.handoff.pastor_notice === "pastor_text_channel_closed" && stopped.guide[0].status === "handoff_open");
+check("pastor said STOP: the visitor is not told the pastor was reminded", !stopped.outbox.some((m) => m.message.startsWith("Your message is with the pastor")));
+const flagOffNoStop = run(newModule, { env: guideEnv, seed: stopSeed(null, false), steps: stopSteps.slice(0, 2) });
+check("flag off for another reason is not a STOP: the pastor is texted", flagOffNoStop.outbox.some((m) => m.to.endsWith(N.pastor)) && flagOffNoStop.guide[0].values.handoff.pastor_notice === "texted");
+const restarted = run(newModule, { env: guideEnv, seed: stopSeed("start", true), steps: stopSteps.slice(0, 2) });
+check("pastor texted START again: the pastor is texted", restarted.outbox.some((m) => m.to.endsWith(N.pastor)));
+const unknown = run(newModule, {
+  env: guideEnv,
+  failProfiles: 1,
+  steps: [inbound(N.visitor, "what time is service on sunday", 1), answer("q:1", notSaved), { path: "/phone/pulse", name: "next pulse", body: { type: "minute" } }, { path: "/phone/pulse", name: "pulse after", body: { type: "minute" } }],
+});
+check("STOP check unreadable: the pastor is not texted then, and the notice is held", unknown.out[1].requests.every((r) => !(r.includes("alliance_sms_outbox") && r.includes(N.pastor))));
+check("STOP check unreadable: the notice is sent on the next pulse, once", unknown.outbox.filter((m) => m.to.endsWith(N.pastor)).length === 1 && unknown.guide[0].values.handoff.pastor_notice === "texted");
+
 // Rule 6, and the crisis line added once and never twice.
 const guard = run(newModule, {
   env: guideEnv,
@@ -370,7 +396,7 @@ const forgotten = nudge.outbox.filter((m) => m.message.startsWith("Your message 
 check("pastor has not replied: the visitor is told once, and the pastor is reminded at the same moment", forgotten.length === 1 && nudge.outbox.filter((m) => m.message.startsWith("Reminder:")).length === 1);
 
 // The gate itself.
-const everyRun = [flow, saving, guard, silent, nudge];
+const everyRun = [flow, saving, stopped, flagOffNoStop, restarted, unknown, guard, silent, nudge];
 const allowed = [N.visitor, N.visitor2, N.pastor];
 check("every text the guide path queued went to a number inside the gate", everyRun.every((r) => r.outbox.every((m) => allowed.some((n) => m.to.endsWith(n)))));
 const leak = run(newModule, {
