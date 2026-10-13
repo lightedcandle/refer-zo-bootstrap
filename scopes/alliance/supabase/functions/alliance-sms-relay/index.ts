@@ -1365,7 +1365,8 @@ async function nextGuideQuestion() {
   if (!claimed) return { ok: true, question: null };
   const values = (row.values || {}) as Record<string, unknown>;
   // Exactly the contract's "what goes in", less the cards, which the collector
-  // holds. No number, no name, no history.
+  // holds. No number, no name, no history. What the pastor has saved is read
+  // fresh for every question, so an answer is used the moment it is saved.
   return {
     ok: true,
     question: {
@@ -1375,8 +1376,76 @@ async function nextGuideQuestion() {
       church_id: values.church_id || "",
       question: values.question || "",
       first_contact: Boolean(values.first_contact),
+      saved_answers: await guideSavedAnswers(String(values.church_id || "")),
     },
   };
+}
+
+// The pastor's saved answers that are in force today (Telechurch,
+// org_standing_answers). An answer past its end is not returned. Never fatal:
+// without them the guide still has the cards.
+async function guideSavedAnswers(churchId: string) {
+  if (!churchId) return [];
+  try {
+    const rows = await rest("/rpc/org_standing_answers_in_force", { method: "POST", body: { p_org_id: churchId } });
+    return (Array.isArray(rows) ? rows : []).slice(0, 40).map((row, index) => ({
+      id: `S${index + 1}`,
+      about: String(row?.label || String(row?.topic || "").replace(/_/g, " ")).trim(),
+      say: String(row?.answer || "").trim(),
+    })).filter((row) => row.say);
+  } catch (_error) {
+    return [];
+  }
+}
+
+// "SAVE dress code" from the pastor keeps their last reply as a standing
+// answer for the church, under that subject. Operator, 2026-10-13: pastors may
+// save by text and the text door may write answers. INFERRED: a texted SAVE is
+// the pastor's approval, so the answer is saved, not left as a draft.
+async function guideSavePastorAnswer(from: string, aboutWords: string) {
+  const recent = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.handoff_closed&order=updated_at.desc&limit=5&select=id,values`);
+  const target = (Array.isArray(recent) ? recent : []).find((row) => {
+    const closedAt = Date.parse(String(row?.values?.handoff?.closed_at || ""));
+    return row?.values?.pastor_reply && !row?.values?.saved_answer_id && Number.isFinite(closedAt) && Date.now() - closedAt < 24 * 60 * 60 * 1000;
+  });
+  // Nothing of this pastor's to save: the text is not for the guide.
+  if (!target) return null;
+  const values = (target.values || {}) as Record<string, unknown>;
+  const shortNo = (values.handoff as Record<string, unknown>)?.short_no;
+  const label = aboutWords.replace(/\s+/g, " ").trim().slice(0, 60);
+  const topic = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
+  if (!/^[a-z][a-z0-9_]{1,39}$/.test(topic)) {
+    const delivery = await guideSend(from, `To save your answer to #${shortNo}, add a word or two for what it is about, like: SAVE dress code`, { question_id: target.id, kind: "pastor_save_needs_subject" });
+    return { ok: true, routed: true, reason: "guide_pastor_save_needs_subject", script_id: "alliance.sms_guide.v1", delivery };
+  }
+  let savedId = "";
+  try {
+    const inserted = await rest("/org_standing_answers?select=id", {
+      method: "POST",
+      body: {
+        org_id: values.church_id,
+        topic,
+        label,
+        answer: String(values.pastor_reply).trim().slice(0, 600),
+        lifespan: "standing",
+        source: "reply",
+        status: "saved",
+      },
+    });
+    savedId = String((Array.isArray(inserted) ? inserted[0] : inserted)?.id || "");
+  } catch (_error) {
+    savedId = "";
+  }
+  if (!savedId) {
+    const delivery = await guideSend(from, `Sorry, your answer to #${shortNo} could not be saved just now. Nothing was lost; your reply was still sent.`, { question_id: target.id, kind: "pastor_save_failed" });
+    return { ok: true, routed: true, reason: "guide_pastor_save_failed", script_id: "alliance.sms_guide.v1", delivery };
+  }
+  await rest(`/alliance_records?id=eq.${encodeURIComponent(target.id)}&select=id`, {
+    method: "PATCH",
+    body: { values: { ...values, saved_answer_id: savedId, saved_answer_topic: topic } },
+  });
+  const delivery = await guideSend(from, `Saved under "${label}". The guide will give your answer the next time someone asks about it.`, { question_id: target.id, kind: "pastor_save_confirm" });
+  return { ok: true, routed: true, reason: "guide_pastor_answer_saved", script_id: "alliance.sms_guide.v1", saved_answer_id: savedId, delivery };
 }
 
 function guideReadResponse(response: unknown) {
@@ -1473,6 +1542,11 @@ async function guideHandOff(
 }
 
 async function routeGuidePastorReply(from: string, inbound: string) {
+  const save = inbound.match(/^save\b[\s:,.\-]*([\s\S]*)$/i);
+  if (save) {
+    const saved = await guideSavePastorAnswer(from, save[1]);
+    if (saved) return saved;
+  }
   const open = await rest(`/alliance_records?entity=eq.${GUIDE_ENTITY}&status=eq.handoff_open&order=created_at.asc&select=id,values`);
   const rows = Array.isArray(open) ? open : [];
   // Nothing waiting on this pastor: the text is not a reply, and takes today's path.
@@ -1508,7 +1582,11 @@ async function routeGuidePastorReply(from: string, inbound: string) {
     kind: "pastor_reply",
   });
   const shortNo = (values.handoff as Record<string, unknown>)?.short_no;
-  await guideSend(from, `Sent. Your reply to #${shortNo} is on its way to them.`, { question_id: target.id, kind: "pastor_confirm" }).catch(() => null);
+  await guideSend(
+    from,
+    `Sent. Your reply to #${shortNo} is on its way to them. To keep it so the guide can answer this next time, reply SAVE and a word or two for what it is about, like: SAVE service times`,
+    { question_id: target.id, kind: "pastor_confirm" },
+  ).catch(() => null);
   return { ok: true, routed: true, reason: "guide_pastor_reply_delivered", script_id: "alliance.sms_guide.v1", question_id: target.id, delivery };
 }
 

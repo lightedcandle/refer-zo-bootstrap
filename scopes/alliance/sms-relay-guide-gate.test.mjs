@@ -42,7 +42,7 @@ const N = {
 // ---- the child: one relay, one pretend world, one script of requests --------
 if (process.env.RELAY_CHILD) {
   const spec = JSON.parse(process.env.RELAY_CHILD);
-  const db = { alliance_records: [], alliance_sms_outbox: [], alliance_sms_inbox: [], alliance_sms_delivery_events: [] };
+  const db = { alliance_records: [], alliance_sms_outbox: [], alliance_sms_inbox: [], alliance_sms_delivery_events: [], org_standing_answers: [] };
   const trace = [];
   let seq = 0;
   let clock = Date.now();
@@ -79,6 +79,10 @@ if (process.env.RELAY_CHILD) {
       if (url.pathname === "/phone/pulse") return respond({ ok: true });
       if (url.pathname === "/phone/inbound") return respond({ ok: true, response_kind: "blocked", response_text: "" });
       return respond({ ok: false }, 404);
+    }
+    if (url.pathname === "/rest/v1/rpc/org_standing_answers_in_force") {
+      if (spec.failSavedRead) return respond({ message: "pretend failure" }, 500);
+      return respond(db.org_standing_answers.filter((r) => r.org_id === body.p_org_id && r.status === "saved"));
     }
     const table = url.pathname.replace("/rest/v1/", "");
     const rows = db[table];
@@ -147,6 +151,7 @@ if (process.env.RELAY_CHILD) {
   process.stdout.write(JSON.stringify({
     out,
     outbox: db.alliance_sms_outbox.map((r) => ({ to: r.to_phone, message: r.message, scrubbed: scrub(r.message), kind: r.metadata?.raw?.kind || r.metadata?.raw?.source || "" })),
+    saved: db.org_standing_answers,
     guide: db.alliance_records.filter((r) => r.entity === "sms_guide_question").map((r) => ({ id: r.id, status: r.status, values: r.values })),
   }));
   process.exit(0);
@@ -276,6 +281,34 @@ check("pastor is told it was sent", o2[4].to.endsWith(N.pastor) && o2[4].message
 check("the question is closed and keeps the reply", flow.guide[1].status === "handoff_closed" && flow.guide[1].values.pastor_reply.startsWith("Sundays") && flow.guide[0].status === "answered");
 check("with nothing open again, the pastor's next text is not treated as a reply", !JSON.stringify(flow.out[8].raw).includes("guide_pastor_reply") && !o2.slice(5).some((m) => m.to.endsWith(N.visitor)));
 
+// The pastor saves a reply by text, and the next question is handed it.
+const saving = run(newModule, {
+  env: guideEnv,
+  steps: [
+    inbound(N.pastor, "SAVE service times", 1),
+    inbound(N.visitor, "what time is service on sunday", 2),
+    answer("q:1", notSaved),
+    inbound(N.pastor, "Sundays at 10:30. Come as you are.", 3),
+    inbound(N.pastor, "save", 4),
+    inbound(N.pastor, "SAVE service times", 5),
+    inbound(N.pastor, "SAVE service times", 6),
+    inbound(N.visitor, "when do you meet", 7),
+    { path: "/guide/next", method: "GET", name: "collect after saving" },
+  ],
+});
+const toPastor = saving.outbox.filter((m) => m.to.endsWith(N.pastor)).map((m) => m.message);
+check("SAVE with nothing to save is not the guide's: today's path", !JSON.stringify(saving.out[0].raw).includes("guide_pastor") && saving.saved.length === 1);
+check("after a reply the pastor is offered SAVE", toPastor.some((m) => m.startsWith("Sent.") && m.includes("reply SAVE")));
+check("SAVE with no subject: the pastor is asked for one, nothing is saved yet", saving.out[4].raw.profile.reason === "guide_pastor_save_needs_subject" && toPastor.some((m) => m.includes("add a word or two")));
+const row = saving.saved[0];
+check("SAVE with a subject writes one standing answer for the church, in the pastor's words", row && row.org_id === "church-1" && row.topic === "service_times" && row.label === "service times" && row.answer === "Sundays at 10:30. Come as you are." && row.lifespan === "standing" && row.source === "reply" && row.status === "saved");
+check("the saved answer holds none of the visitor's words and no number", row && !JSON.stringify(row).includes("what time is service") && !JSON.stringify(row).includes(N.visitor));
+check("the same reply is not saved twice", saving.saved.length === 1 && !JSON.stringify(saving.out[6].raw).includes("guide_pastor_answer_saved"));
+const handed = byName(saving, "collect after saving").raw.question;
+check("the next question is handed the saved answer", handed.saved_answers.length === 1 && handed.saved_answers[0].id === "S1" && handed.saved_answers[0].about === "service times" && handed.saved_answers[0].say.startsWith("Sundays at 10:30"));
+const savedDown = run(newModule, { env: guideEnv, failSavedRead: true, steps: [inbound(N.visitor, "when do you meet", 1), { path: "/guide/next", method: "GET", name: "collect" }] });
+check("saved answers unreadable: the question is still handed out, with none", byName(savedDown, "collect").raw.question?.question === "when do you meet" && savedDown.out[1].raw.question.saved_answers.length === 0);
+
 // Rule 6, and the crisis line added once and never twice.
 const guard = run(newModule, {
   env: guideEnv,
@@ -337,7 +370,7 @@ const forgotten = nudge.outbox.filter((m) => m.message.startsWith("Your message 
 check("pastor has not replied: the visitor is told once, and the pastor is reminded at the same moment", forgotten.length === 1 && nudge.outbox.filter((m) => m.message.startsWith("Reminder:")).length === 1);
 
 // The gate itself.
-const everyRun = [flow, guard, silent, nudge];
+const everyRun = [flow, saving, guard, silent, nudge];
 const allowed = [N.visitor, N.visitor2, N.pastor];
 check("every text the guide path queued went to a number inside the gate", everyRun.every((r) => r.outbox.every((m) => allowed.some((n) => m.to.endsWith(n)))));
 const leak = run(newModule, {
