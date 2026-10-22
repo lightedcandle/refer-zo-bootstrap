@@ -1,3 +1,9 @@
+// STALE COPY - DO NOT DEPLOY (noted 2026-10-22). The live alliance-sms-relay
+// is built from the Telechurch repo, supabase/functions/alliance-sms-relay/,
+// and was at version 109 when this was written. Deploying this file would take
+// production back past twelve versions. The one thing here that Telechurch's
+// copy lacks is the pastor STOP check (guideSendPastor, guidePastorTextState);
+// carry it there, do not deploy it from here.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
